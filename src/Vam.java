@@ -26,8 +26,8 @@ public class Vam extends JFrame{
         
         panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
         JLabel label = new JLabel(String.valueOf(number));
-        lines.add(new JTextField());
-        ((JTextField)lines.get(number-1)).setSize(680, 20);
+        lines.add(new JTextField(30));
+        ((JTextField)lines.get(number-1)).setSize(680, 30);
         panel.add(label);
         panel.add(((JTextField)lines.get(number-1)));
         panel.setSize(360, 24);
