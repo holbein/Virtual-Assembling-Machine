@@ -22,7 +22,7 @@ public class Vam extends JFrame{
 		setSize(FRAME_WIDTH, FRAME_HEIGHT);
 		setResizable(false);
 		setLayout(new GridLayout(1, 2));
-		setTitle("Virtual Assembling Machine");
+		setTitle("Virtual Assembler Machine");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		
 		scrollPane.getVerticalScrollBar().setUnitIncrement(10); //sets the scroll-speed
