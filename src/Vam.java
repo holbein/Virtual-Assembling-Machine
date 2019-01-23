@@ -313,6 +313,7 @@ public class Vam extends JFrame{
 		}else {
 			System.out.println(number+" is too big");
 		}
+		BZ++;
 	}
 	
 	private void div(int number) {
