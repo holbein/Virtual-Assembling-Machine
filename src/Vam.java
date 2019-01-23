@@ -1,6 +1,8 @@
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -54,6 +56,14 @@ public class Vam extends JFrame{
 		setLayout(new GridLayout(1, 2));
 		setTitle("Virtual Assembler Machine");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		
+		List <Image> imgs = new ArrayList<Image>();
+		imgs.add(new ImageIcon(getClass().getResource("resources/VAM_img_128x128.png")).getImage());
+		imgs.add(new ImageIcon(getClass().getResource("resources/VAM_img_64x64.png")).getImage());
+		imgs.add(new ImageIcon(getClass().getResource("resources/VAM_img_32x32.png")).getImage());
+		imgs.add(new ImageIcon(getClass().getResource("resources/VAM_img_16x16.png")).getImage());
+		imgs.add(new ImageIcon(getClass().getResource("resources/VAM_img_8x8.png")).getImage());
+		setIconImages(imgs);
 		
 		textArea.getDocument().addDocumentListener(new MyDocumentListener());
 		scrollPane.getVerticalScrollBar().setUnitIncrement(10); //sets the scroll-speed
