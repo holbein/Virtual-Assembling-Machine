@@ -262,10 +262,10 @@ public class Vam extends JFrame{
 			errorFrame = new JFrame("Error");
 			errorFrame.setLayout(new BoxLayout(errorFrame, BoxLayout.PAGE_AXIS));
 			errorFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-	        errorFrame.setSize(400, 100);
+	        	errorFrame.setSize(400, 100);
 		}
 		
-		errorFrame.add(new JLabel("fasdfasdfasdf"));
+		errorFrame.add(lError);
 		errorFrame.setVisible(true);
 		
 		System.err.println("Unknown command: \""+ input +"\" in line: "+ BZ +"!");
