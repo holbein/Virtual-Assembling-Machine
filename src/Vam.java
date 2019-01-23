@@ -1,3 +1,4 @@
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
@@ -9,7 +10,7 @@ import javax.swing.event.DocumentListener;
 public class Vam extends JFrame{
 	
 	private static final int FRAME_WIDTH = 800;
-	private static final int FRAME_HEIGHT = 800;
+	private static final int FRAME_HEIGHT = 600;
 	
 	boolean stop;
 	
@@ -45,6 +46,8 @@ public class Vam extends JFrame{
 		private JButton start;
 		private JButton reset;
 	
+	private JFrame errorFrame; //small JFrame with error message, that pops up when there was an error 
+	
 	Vam(){
 		setSize(FRAME_WIDTH, FRAME_HEIGHT);
 		setResizable(false);
@@ -75,50 +78,13 @@ public class Vam extends JFrame{
 		setVisible(true);
 	}
 	
-    class MyDocumentListener implements DocumentListener {
-        final String newline = "\n";
- 
-        public void insertUpdate(DocumentEvent e) {
-            if(textArea.getLineCount() > numberOfLines) {
-				numberOfLines++;
-				lineNumbering.setLayout(new GridLayout(numberOfLines, 2));
-				if(numberOfLines<10) {
-					lineNumbering.add(new JLabel(String.valueOf(numberOfLines)+"   "));
-				} else {
-					lineNumbering.add(new JLabel(String.valueOf(numberOfLines)));
-				}
-				lineNumbering.add(new JLabel(":"));
-			}
-        }
-        
-        public void removeUpdate(DocumentEvent e) {
-            if(textArea.getLineCount() < numberOfLines) {
-				numberOfLines--;
-				lineNumbering.setLayout(new GridLayout(numberOfLines, 2));
-				lineNumbering.remove(lineNumbering.getComponentCount()-1);
-				lineNumbering.remove(lineNumbering.getComponentCount()-1);
-			}
-        }
-        public void changedUpdate(DocumentEvent e) {
-            //Plain text components don't fire these events.
-        }
-    }
-    
-	//line is the same number as the numbering of the lines on the right side 
-	public String getTextInLine(int line) {
-		String ret = textArea.getText();
-		for(int i=0; i<line-1; ++i) {
-			ret = ret.substring(ret.indexOf("\n")+1);
-		}
-		if(ret.contains("\n"))ret = ret.substring(0, ret.indexOf("\n"));
-		
-		return ret;
+	public static void main(String args[]) {
+		new Vam();
 	}
 	
-	//call this method, to update the values 
-	public JPanel rightPanel(byte[] by) {
-		JPanel ret = new JPanel();
-		ret.setLayout(new GridLayout(19, 2, 40, 0));
+	private void rightPanel(byte[] by) {
+		panelRight = new JPanel();
+		panelRight.setLayout(new GridLayout(19, 2));
 		
 		labels[0][0] = new JLabel("SR");
 		labels[0][1] = new JLabel("BZ");
@@ -130,11 +96,14 @@ public class Vam extends JFrame{
 		
 		for(int i=0; i<18; i++) {
 			labels[1][i] = new JLabel(String.format("%8s", Integer.toBinaryString(by[i] & 0xFF)).replace(' ', '0'));
+			
+			labels[0][i].setBorder(BorderFactory.createLineBorder(Color.BLACK));
+			labels[1][i].setBorder(BorderFactory.createLineBorder(Color.BLACK));
 		}
 		
 		for(int i=0; i<18; i++) {
-			ret.add(labels[0][i]);
-			ret.add(labels[1][i]);
+			panelRight.add(labels[0][i]);
+			panelRight.add(labels[1][i]);
 		}
 		
 		start = new JButton(new AbstractAction("Start"){
@@ -149,12 +118,57 @@ public class Vam extends JFrame{
             }
 		});
 		
-		ret.add(start);
-		ret.add(reset);
+		panelRight.add(start);
+		panelRight.add(reset);
+	}
+	
+	//call this method, to update the values 
+	private void reDrawRightPanel(byte[] by) {
+		for(int i=0; i<18; i++) {
+			labels[1][i].setText(String.format("%8s", Integer.toBinaryString(by[i] & 0xFF)).replace(' ', '0'));
+		}
+	}
+	
+    class MyDocumentListener implements DocumentListener {
+        final String newline = "\n";
+ 
+        public void insertUpdate(DocumentEvent e) {
+        	lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 2));
+			while(textArea.getLineCount() > numberOfLines) {
+				numberOfLines++;
+				if(numberOfLines<10) {
+					lineNumbering.add(new JLabel(String.valueOf(numberOfLines)+"  "));
+				} else {
+					lineNumbering.add(new JLabel(String.valueOf(numberOfLines)));
+				}
+				lineNumbering.add(new JLabel(":"));
+			}
+        }
+        
+        public void removeUpdate(DocumentEvent e) {
+        	lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 2));
+			while(textArea.getLineCount() < numberOfLines) {
+				lineNumbering.remove(lineNumbering.getComponentCount()-1);
+				lineNumbering.remove(lineNumbering.getComponentCount()-1);
+				numberOfLines--;
+			}
+        }
+        public void changedUpdate(DocumentEvent e) {
+            //Plain text components don't fire these events.
+        }
+    }
+    
+	//line is the same number as the numbering of the lines on the right side 
+	private String getTextInLine(int line) {
+		String ret = textArea.getText();
+		for(int i=0; i<line-1; ++i) {
+			ret = ret.substring(ret.indexOf("\n")+1);
+		}
+		if(ret.contains("\n"))ret = ret.substring(0, ret.indexOf("\n"));
 		
 		return ret;
 	}
-	
+
 	private void reset() {
 		stop = false;
 		SR = 0;
@@ -177,34 +191,65 @@ public class Vam extends JFrame{
 		R15 = 0;
 		
 		byte[] by = {SR, BZ, A, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15};
-		panelRight = rightPanel(by);
+		if(panelRight == null) rightPanel(by);
+		else reDrawRightPanel(by);
 	}
 	
 	private void start() {
-		while(!stop) {
+		while(!stop && 0 < BZ && BZ <= textArea.getLineCount()) {
 			check(getTextInLine(BZ).trim());
 		}
 		byte[] by = {SR, BZ, A, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15};
-		panelRight = rightPanel(by);
+		reDrawRightPanel(by);
 	}
+
+		//separates the command and the rest
+	public void check(String input) {
+		
+		if (input.equals("END")) {
+			execute("END", 0);
+			return;
+		}
+		
+		int space = input.indexOf(' ');			
+		if (space == -1) { // rubbish
+			def(input);
+			return;
+		}
+		
+		String com = input.substring(0, space);
+		
+		execute(com, Integer.parseInt(input.substring(space+1)));
+	}
+
 	
 	private void def(String input) {//default
-		/*JFrame frame = new JFrame("Error");
-		frame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		frame.setSize(200, 100);
-		
-		JLabel lError = new JLabel("Unknown command: \"" + input +"\"!");
+        String caller = Thread.currentThread().getStackTrace()[2].getMethodName(); //for debug purposes: shows in which method def(String) was called
+        int lineNo = Thread.currentThread().getStackTrace()[2].getLineNumber(); //for debug purposes: show in which line def(String) was called
+        
+		JLabel lError = new JLabel("Unknown command: \""+ input +"\" in line: "+ BZ +"!");
 		lError.setForeground(Color.RED);
 		
-		frame.add(lError);
-		frame.setVisible(true);*/        //Use only when there are no loop-bugs!!!!
-		System.out.println("unknown command: \"" + input +"\"");
+		if(errorFrame == null || !errorFrame.isDisplayable()) {
+			errorFrame = new JFrame("Error");
+			errorFrame.setLayout(new BoxLayout(errorFrame, BoxLayout.PAGE_AXIS));
+			errorFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+	        	errorFrame.setSize(400, 100);
+		}
+		
+		errorFrame.add(lError);
+		errorFrame.setVisible(true);
+		
+		System.err.println("Unknown command: \""+ input +"\" in line: "+ BZ +"!");
 		BZ++;
 	}
 	
 	//calls the right method 
 	private void execute(String command, int rest) {
 		switch(command) {
+		case "END":
+			end();
+			break;
 		case "ADD":
 			add(rest);
 			break;
@@ -246,9 +291,6 @@ public class Vam extends JFrame{
 			break;
 		case "SUB":
 			sub(rest);
-			break;
-		case "END":
-			end();
 			break;
 		default:
 			def(command+" "+rest);
@@ -341,7 +383,7 @@ public class Vam extends JFrame{
 				break;
 		}
 		int temp=A/i;
-		
+
 		SR = (byte) (SR & Byte.valueOf("-1111100",2)); //set last 2 bits to 0
 		if(temp>0) {
 			SR = (byte) (SR | Byte.valueOf("00000010",2)); //set bit before last to 1
@@ -353,9 +395,8 @@ public class Vam extends JFrame{
 		if(temp<128&&temp>-129) {
 			A=(byte)temp;
 			SR = (byte) (SR & Byte.valueOf("-1111011",2));//set 6. bit to 0
-											//          11111111112222222222333
-		}else {								// 12345678901234567890123456789012
-			A = (byte)(temp & Integer.valueOf("00000000000000000000000011111111",2));
+		}else {								
+			A = (byte)(temp & Integer.valueOf("11111111",2));
 			SR = (byte) (SR | Byte.valueOf("00000100",2));//set 6. bit to 1
 		}
 		BZ++;
@@ -493,10 +534,10 @@ public class Vam extends JFrame{
 		}
 		if(temp<128&&temp>-129) {
 			A=(byte)temp;
+
 			SR = (byte) (SR & Byte.valueOf("-1111011",2));//set 6. bit to 0
-											//          11111111112222222222333
-		}else {								// 12345678901234567890123456789012
-			A = (byte)(temp & Integer.valueOf("00000000000000000000000011111111",2));
+		}else {								
+			A = (byte)(temp & Integer.valueOf("11111111",2));
 			SR = (byte) (SR | Byte.valueOf("00000100",2));//set 6. bit to 1
 		}
 		BZ++;
@@ -524,6 +565,7 @@ public class Vam extends JFrame{
 				end();
 				break;
 		}
+		BZ++;
 	}
 	
 	private void sub(int number) {
@@ -559,329 +601,19 @@ public class Vam extends JFrame{
 		}else {
 			if(temp<0) {
 				SR = (byte) (SR | Byte.valueOf("00000001",2));//set last bit to 1
+
 			}
 		}
 		if(temp<128&&temp>-129) {
 			A=(byte)temp;
 			SR = (byte) (SR & Byte.valueOf("-1111011",2));//set 6. bit to 0
-											//          11111111112222222222333
-		}else {								// 12345678901234567890123456789012
-			A = (byte)(temp & Integer.valueOf("00000000000000000000000011111111",2));
+		}else {								
+			A = (byte)(temp & Integer.valueOf("11111111",2));
 			SR = (byte) (SR | Byte.valueOf("00000100",2));//set 6. bit to 1
 		}
 		BZ++;
 	}
 	
-	//separates the command and the rest
-	public void check(String input) {
-		
-		if (input.equals("END")) {
-			execute("END", 0);
-			return;
-		}
-		
-		int space = input.indexOf(' ');			
-		if (space == -1) { // rubbish
-			def(input);
-			return;
-		}
-		
-		String com = input.substring(0, space);
-		
-		execute(com, Integer.parseInt(input.substring(space+1)));
-		/*
-		switch(com) {
-			case "LOAD": case "STORE": case "ADD": case "SUB": case "MULT": case "DIV":{
-				try {
-					int number = Integer.parseInt(input.substring(space+1));
-					if(0 < number && number < 16) {
-						execute(com, number);
-					}else def(input);
-				}catch(Exception e) {
-					def(input);
-				}
-			}
-			break;
-			
-			case "DLOAD":{
-				try {
-					int number = Integer.parseInt(input.substring(space+1));
-					if(-129 < number && number < 128) {
-						execute(com, number);
-					}else def(input);
-				}catch(Exception e) {
-					def(input);
-				}
-			}
-			break;
-			
-			case "JUMP": case "JGE": case "JGT": case "JLE": case "JLT": case "JEQ": case "JNE":{
-				try {
-					int number = Integer.parseInt(input.substring(space+1));
-					if(0 < number && number <= textArea.getLineCount()) {
-						execute(com, number);
-					}
-					else {
-						def(input);
-					}
-				}catch(Exception e) {
-					def(input);
-				}
-			}
-			break;
-			
-			default: def(input);
-		}
-		/*
-		switch(input.charAt(0)){
-		case 'A'://A
-			switch(input.charAt(1)){
-			case 'D'://AD
-				switch(input.charAt(2)){
-				case 'D'://ADD
-					execute(input.substring(0, 3), input.substring(3));
-					break;
-				default:
-					def(input);
-					break;
-				}
-				break;
-			default:
-				def(input);
-				break;
-			}
-			break;
-		case 'D'://D
-			switch(input.charAt(1)){
-			case 'L'://DL
-				switch(input.charAt(2)){
-				case 'O'://DLO
-					switch(input.charAt(3)){
-					case 'A'://DLOA
-						switch(input.charAt(4)){
-						case 'D'://DLOAD
-							execute(input.substring(0, 5), input.substring(5));
-							break;
-						default:
-							def(input);
-							break;
-						}
-						break;
-					default:
-						def(input);
-						break;
-					}
-					break;
-				default:
-					def(input);
-					break;
-				}
-				break;
-			case 'I'://DI
-				switch(input.charAt(2)){
-				case 'V'://DIV
-					execute(input.substring(0, 3), input.substring(3));
-					break;
-				default:
-					def(input);
-					break;
-				}
-				break;
-			default:
-				def(input);
-				break;
-			}
-			break;
-		case 'E'://E
-			switch(input.charAt(1)){
-			case 'N'://EN
-				switch(input.charAt(2)){
-				case 'D'://END
-					execute(input.substring(0, 3), input.substring(3));
-					break;
-				default:
-					def(input);
-					break;
-				}
-				break;
-			default:
-				def(input);
-				break;
-			}
-			break;
-			
-		case 'J'://J
-			switch(input.charAt(1)){
-			case 'E'://JE
-				switch(input.charAt(2)){
-				case 'Q'://JEQ
-					execute(input.substring(0, 3), input.substring(3));
-					break;
-				default:
-					def(input);
-					break;
-				}
-				break;
-			default:
-				def(input);
-				break;
-			case 'G'://JG
-				switch(input.charAt(2)){
-				case 'E'://JGE
-					execute(input.substring(0, 3), input.substring(3));
-					break;
-				case 'T'://JGT
-					execute(input.substring(0, 3), input.substring(3));
-					break;
-				default:
-					def(input);
-					break;
-				}
-				break;
-			case 'L'://JL
-				switch(input.charAt(2)){
-				case 'E'://JLE
-					execute(input.substring(0, 3), input.substring(3));
-					break;
-				case 'T'://JLT
-					execute(input.substring(0, 3), input.substring(3));
-					break;
-				default:
-					def(input);
-					break;
-				}
-				break;
-			case 'N'://JN
-				switch(input.charAt(2)){
-				case 'E'://JNE
-					execute(input.substring(0, 3), input.substring(3));
-					break;
-				default:
-					def(input);
-					break;
-				}
-				break;
-			case 'U'://JU
-				switch(input.charAt(2)){
-				case 'M'://JUM
-					switch(input.charAt(3)){
-					case 'P'://JUMP
-						execute(input.substring(0, 4), input.substring(4));
-						break;
-					default:
-						def(input);
-						break;
-					}
-					break;
-				default:
-					def(input);
-					break;
-				}	
-				break;			
-			}
-			break;
-		case 'L'://L
-			switch(input.charAt(1)){
-			case 'O'://LO
-				switch(input.charAt(2)){
-				case 'A'://LOA
-					switch(input.charAt(3)){
-					case 'D'://LOAD
-						execute(input.substring(0, 4), input.substring(4));
-						break;
-					default:
-						def(input);
-						break;
-					}
-					break;
-				default:
-					def(input);
-					break;
-				}
-				break;
-			default:
-				def(input);
-				break;
-			}
-			break;
-			
-		case 'M'://M
-			switch(input.charAt(1)){
-			case 'U'://MU
-				switch(input.charAt(2)){
-				case 'L'://MUL
-					switch(input.charAt(3)){
-					case 'T'://MULT
-						execute(input.substring(0, 4), input.substring(4));
-						break;
-					default:
-						def(input);
-						break;
-					}
-					break;
-				default:
-					def(input);
-					break;
-				}
-				break;
-			default:
-				def(input);
-				break;
-			}
-			break;
-			
-		case 'S'://S
-			switch(input.charAt(1)){
-			case 'T'://ST
-				switch(input.charAt(2)){
-				case 'O'://STO
-					switch(input.charAt(3)){
-					case 'R'://STOR
-						switch(input.charAt(4)){
-						case 'E'://STORE
-							execute(input.substring(0, 5), input.substring(5));
-							break;
-						default:
-							def(input);
-							break;
-						}
-						break;
-					default:
-						def(input);
-						break;
-					}
-					break;
-				default:
-					def(input);
-					break;
-				}
-				break;
-			case 'U'://SU
-				switch(input.charAt(2)){
-				case 'B'://SUB
-					execute(input.substring(0, 3), input.substring(3));
-					break;
-				default:
-					def(input);
-					break;
-				}
-				break;
-			default:
-				def(input);
-				break;
-			}
-			break;
-		
-		default:
-			def(input);
-			break;
-		}
-		}*/
-	}
-	
-	public static void main(String args[]) {
-		new Vam();
-	}
 }
 
 /* Just a simple program to test:
