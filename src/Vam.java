@@ -1,6 +1,10 @@
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+
 import javax.swing.*;
+
 
 public class Vam extends JFrame{
 	
@@ -29,10 +33,11 @@ public class Vam extends JFrame{
 	public static byte R15;
 	
 	
-	private int numberOfLines = 10;
+	private int numberOfLines = 1;
 	
 	private JPanel panelLeft = new JPanel();
 		private JScrollPane scrollPane = new JScrollPane(panelLeft);
+		private JPanel lineNumbering = new JPanel();
 			private JTextArea textArea = new JTextArea(numberOfLines, 30);
 	
 	private JPanel panelRight;
@@ -47,9 +52,20 @@ public class Vam extends JFrame{
 		setTitle("Virtual Assembler Machine");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		
+		textArea.addKeyListener(new MyKeyListener());
 		scrollPane.getVerticalScrollBar().setUnitIncrement(10); //sets the scroll-speed
 		
-		panelLeft.add(addLineNumbering());
+		lineNumbering.setLayout(new GridLayout(numberOfLines, 2));
+		for(int i=0; i<numberOfLines; ++i) {
+			if(numberOfLines<10) {
+				lineNumbering.add(new JLabel(String.valueOf(numberOfLines)+"   "));
+			} else {
+				lineNumbering.add(new JLabel(String.valueOf(numberOfLines)));
+			}
+			lineNumbering.add(new JLabel(":"));
+		}
+		
+		panelLeft.add(lineNumbering);
 		panelLeft.add(textArea);
 		
 		reset();
@@ -59,16 +75,48 @@ public class Vam extends JFrame{
 		setVisible(true);
 	}
 	
-	private JPanel addLineNumbering() {
-		JPanel ret = new JPanel();
-		ret.setLayout(new GridLayout(numberOfLines, 2));
-		
-		for(int i=0; i<numberOfLines; ++i) {
-			ret.add(new JLabel(String.valueOf(i+1)));
-			ret.add(new JLabel(":"));
+	public class MyKeyListener implements KeyListener{
+		@Override
+		public void keyPressed(KeyEvent e) {
+			if(e.getKeyCode() == KeyEvent.VK_ENTER) {
+				System.out.println("ENTER " + textArea.getLineCount()+" "+numberOfLines);
+				//System.out.println(textArea.getText());
+				numberOfLines = textArea.getLineCount()+1;
+				lineNumbering.setLayout(new GridLayout(numberOfLines, 2));
+				if(numberOfLines<10) {
+					lineNumbering.add(new JLabel(String.valueOf(numberOfLines)+"   "));
+				} else {
+					lineNumbering.add(new JLabel(String.valueOf(numberOfLines)));
+				}
+				lineNumbering.add(new JLabel(":"));
+			}
+			
+			if(e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
+				System.out.println("BACKSPACE " + textArea.getLineCount()+" "+numberOfLines);
+				//System.out.println(textArea.getText());
+				if(textArea.getLineCount() == numberOfLines) {
+					try {
+						Robot r = new Robot();
+						System.out.println("BACVCK");
+						r.keyPress(KeyEvent.VK_BACK_SPACE);
+						r.keyRelease(KeyEvent.VK_BACK_SPACE);
+						System.out.println(textArea.getLineCount()+" "+numberOfLines);
+						if(textArea.getLineCount() != numberOfLines) {
+							numberOfLines = textArea.getLineCount()-1;
+							lineNumbering.setLayout(new GridLayout(numberOfLines, 2));
+							lineNumbering.remove(lineNumbering.getComponentCount()-1);
+							lineNumbering.remove(lineNumbering.getComponentCount()-1);
+						}
+					}catch(Exception ex) {}
+				}
+			}
 		}
-		
-		return ret;
+
+		@Override
+		public void keyReleased(KeyEvent e) {}
+
+		@Override
+		public void keyTyped(KeyEvent e) {}
 	}
 	
 	public String getFullText() {
