@@ -48,7 +48,9 @@ public class Vam extends JFrame{
 		private JButton start;
 		private JButton reset;
 	
-	private JFrame errorFrame; //small JFrame with error message, that pops up when there was an error 
+	private JFrame errorFrame; //small JFrame with error message, that pops up when there was an error
+	private JPanel errorPanel = new JPanel();
+	private JScrollPane errorScroll = new JScrollPane(errorPanel);
 	
 	Vam(){
 		setSize(FRAME_WIDTH, FRAME_HEIGHT);
@@ -213,8 +215,8 @@ public class Vam extends JFrame{
 		reDrawRightPanel(by);
 	}
 
-		//separates the command and the rest
-	public void check(String input) {
+	//separates the command and the rest
+	private void check(String input) {
 		
 		if (input.equals("END")) {
 			execute("END", 0);
@@ -242,12 +244,14 @@ public class Vam extends JFrame{
 		
 		if(errorFrame == null || !errorFrame.isDisplayable()) {
 			errorFrame = new JFrame("Error");
-			errorFrame.setLayout(new BoxLayout(errorFrame, BoxLayout.PAGE_AXIS));
 			errorFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-	        	errorFrame.setSize(400, 100);
+	        errorFrame.setSize(400, 150);
+	        
+	        errorPanel.setLayout(new BoxLayout(errorPanel, BoxLayout.PAGE_AXIS));
 		}
 		
-		errorFrame.add(lError);
+		errorPanel.add(lError);
+		errorFrame.add(errorScroll);
 		errorFrame.setVisible(true);
 		
 		System.err.println("Unknown command: \""+ input +"\" in line: "+ BZ +"!");
