@@ -96,26 +96,29 @@ public class Vam extends JFrame{
 	
 	private void rightPanel(byte[] by) {
 		panelRight = new JPanel();
-		panelRight.setLayout(new GridLayout(19, 2));
+		panelRight.setLayout(new GridLayout(19, 3));
 		
-		labels[0][0] = new JLabel("SR");
-		labels[0][1] = new JLabel("BZ");
-		labels[0][2] = new JLabel("A");
+		labels[0][0] = new JLabel("SR", SwingConstants.CENTER);
+		labels[0][1] = new JLabel("BZ", SwingConstants.CENTER);
+		labels[0][2] = new JLabel("A", SwingConstants.CENTER);
 		
 		for (int i=0; i<15; ++i) {
-			labels[0][i+3] = new JLabel("R"+(i+1));
+			labels[0][i+3] = new JLabel("R"+(i+1), SwingConstants.CENTER);
 		}
 		
 		for(int i=0; i<18; i++) {
-			labels[1][i] = new JLabel(String.format("%8s", Integer.toBinaryString(by[i] & 0xFF)).replace(' ', '0'));
+			labels[1][i] = new JLabel(String.format("%8s", Integer.toBinaryString(by[i] & 0xFF)).replace(' ', '0'), SwingConstants.CENTER);
+			labels[2][i] = new JLabel(Byte.toString(by[i]), SwingConstants.CENTER);
 			
 			labels[0][i].setBorder(BorderFactory.createLineBorder(Color.BLACK));
 			labels[1][i].setBorder(BorderFactory.createLineBorder(Color.BLACK));
+			labels[2][i].setBorder(BorderFactory.createLineBorder(Color.BLACK));
 		}
 		
 		for(int i=0; i<18; i++) {
 			panelRight.add(labels[0][i]);
 			panelRight.add(labels[1][i]);
+			panelRight.add(labels[2][i]);
 		}
 		
 		start = new JButton(new AbstractAction("Start"){
@@ -138,6 +141,7 @@ public class Vam extends JFrame{
 	private void reDrawRightPanel(byte[] by) {
 		for(int i=0; i<18; i++) {
 			labels[1][i].setText(String.format("%8s", Integer.toBinaryString(by[i] & 0xFF)).replace(' ', '0'));
+			labels[2][i].setText(Byte.toString(by[i]));
 		}
 	}
 	
