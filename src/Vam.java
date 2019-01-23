@@ -152,9 +152,15 @@ public class Vam extends JFrame{
 	}
 	
 	private void start() {
-		while(!stop) {
+		/*while(!stop) {
 			check(getTextInLine(BZ));
-		}
+		}*/
+		check("DLOAD 10");
+		check("STORE 1");
+		check("DLOAD 2");
+		check("ADD 1");
+		check("STORE 2");
+		check("END");
 		byte[] by = {SR, BZ, A, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15};
 		panelRight = rightPanel(by);
 	}
@@ -233,43 +239,74 @@ public class Vam extends JFrame{
 		int i;
 		int temp;
 		switch(number) {
-			case 1: i = R1;
-			case 2: i = R2;
-			case 3: i = R3;
-			case 4: i = R4;
-			case 5: i = R5;
-			case 6: i = R6;
-			case 7: i = R7;
-			case 8: i = R8;
-			case 9: i = R9;
-			case 10: i = R10;
-			case 11: i = R11;
-			case 12: i = R12;
-			case 13: i = R13;
-			case 14: i = R14;
-			case 15: i = R15;
-			default: 
-				System.out.println(number+"is not a valid register!");
-				i=0;
-				end();
-		}
+		case 1: 
+			i = R1;
+			break;
+		case 2: 
+			i = R2;
+			break;
+		case 3: 
+			i = R3;
+			break;
+		case 4: 
+			i = R4;
+			break;
+		case 5: 
+			i = R5;
+			break;
+		case 6: 
+			i = R6;
+			break;
+		case 7: 
+			i = R7;
+			break;
+		case 8: 
+			i = R8;
+			break;
+		case 9: 
+			i = R9;
+			break;
+		case 10: 
+			i = R10;
+			break;
+		case 11: 
+			i = R11;
+			break;
+		case 12: 
+			i = R12;
+			break;
+		case 13: 
+			i = R13;
+			break;
+		case 14: 
+			i = R14;
+			break;
+		case 15: 
+			i = R15;
+			break;
+		default: 
+			System.out.println(number+"is not a valid register!");
+			i=0;
+			end();
+			break;
+	}
 		temp=A+i;
 		
-		SR = (byte) (SR & Byte.valueOf("11111100")); //set last 2 bit to 0
+		SR = (byte) (SR & Byte.valueOf("-1111100",2)); //set last 2 bits to 0
 		if(temp>0) {
-			SR = (byte) (SR | Byte.valueOf("00000010")); //set bit before last to 1
+			SR = (byte) (SR | Byte.valueOf("00000010",2)); //set bit before last to 1
 		}else {
 			if(temp<0) {
-				SR = (byte) (SR | Byte.valueOf("00000001"));//set last bit to 1
+				SR = (byte) (SR | Byte.valueOf("00000001",2));//set last bit to 1
 			}
 		}
 		if(temp<128&&temp>-129) {
 			A=(byte)temp;
-			SR = (byte) (SR & Byte.valueOf("11111011"));//set 6. bit to 0
-										//           11111111112222222222333
-	}else {								//  12345678901234567890123456789012
-			A = (byte)(temp & Byte.valueOf("00000000000000000000000011111111"));
-			SR = (byte) (SR | Byte.valueOf("00000100"));//set 6. bit to 1
+			SR = (byte) (SR & Byte.valueOf("-1111011",2));//set 6. bit to 0
+											// 			11111111112222222222333
+		}else {								// 12345678901234567890123456789012
+			A = (byte)(temp & Integer.valueOf("00000000000000000000000011111111",2));
+			SR = (byte) (SR | Byte.valueOf("00000100",2));//set 6. bit to 1
 		}
 		
 		BZ++;
@@ -288,43 +325,74 @@ public class Vam extends JFrame{
 		int i;
 		int temp;
 		switch(number) {
-			case 1: i = R1;
-			case 2: i = R2;
-			case 3: i = R3;
-			case 4: i = R4;
-			case 5: i = R5;
-			case 6: i = R6;
-			case 7: i = R7;
-			case 8: i = R8;
-			case 9: i = R9;
-			case 10: i = R10;
-			case 11: i = R11;
-			case 12: i = R12;
-			case 13: i = R13;
-			case 14: i = R14;
-			case 15: i = R15;
-			default: 
-				System.out.println(number+"is not a valid register!");
-				i=0;
-				end();
-		}
+		case 1: 
+			i = R1;
+			break;
+		case 2: 
+			i = R2;
+			break;
+		case 3: 
+			i = R3;
+			break;
+		case 4: 
+			i = R4;
+			break;
+		case 5: 
+			i = R5;
+			break;
+		case 6: 
+			i = R6;
+			break;
+		case 7: 
+			i = R7;
+			break;
+		case 8: 
+			i = R8;
+			break;
+		case 9: 
+			i = R9;
+			break;
+		case 10: 
+			i = R10;
+			break;
+		case 11: 
+			i = R11;
+			break;
+		case 12: 
+			i = R12;
+			break;
+		case 13: 
+			i = R13;
+			break;
+		case 14: 
+			i = R14;
+			break;
+		case 15: 
+			i = R15;
+			break;
+		default: 
+			System.out.println(number+"is not a valid register!");
+			i=0;
+			end();
+			break;
+	}
 		temp=A/i;
 		
-		SR = (byte) (SR & Byte.valueOf("11111100")); //set last 2 bit to 0
+		SR = (byte) (SR & Byte.valueOf("-1111100",2)); //set last 2 bits to 0
 		if(temp>0) {
-			SR = (byte) (SR | Byte.valueOf("00000010")); //set bit before last to 1
+			SR = (byte) (SR | Byte.valueOf("00000010",2)); //set bit before last to 1
 		}else {
 			if(temp<0) {
-				SR = (byte) (SR | Byte.valueOf("00000001"));//set last bit to 1
+				SR = (byte) (SR | Byte.valueOf("00000001",2));//set last bit to 1
 			}
 		}
 		if(temp<128&&temp>-129) {
 			A=(byte)temp;
-			SR = (byte) (SR & Byte.valueOf("11111011"));//set 6. bit to 0
-										//           11111111112222222222333
-		}else {							//  12345678901234567890123456789012
-			A = (byte)(temp & Byte.valueOf("00000000000000000000000011111111"));
-			SR = (byte) (SR | Byte.valueOf("00000100"));//set 6. bit to 1
+			SR = (byte) (SR & Byte.valueOf("-1111011",2));//set 6. bit to 0
+											//          11111111112222222222333
+		}else {								// 12345678901234567890123456789012
+			A = (byte)(temp & Integer.valueOf("00000000000000000000000011111111",2));
+			SR = (byte) (SR | Byte.valueOf("00000100",2));//set 6. bit to 1
 		}
 		BZ++;
 	}
@@ -388,36 +456,67 @@ public class Vam extends JFrame{
 	}
 	
 	private void load(int number) {
-		int i;
+		byte i;
 		switch(number) {
-			case 1: i = R1;
-			case 2: i = R2;
-			case 3: i = R3;
-			case 4: i = R4;
-			case 5: i = R5;
-			case 6: i = R6;
-			case 7: i = R7;
-			case 8: i = R8;
-			case 9: i = R9;
-			case 10: i = R10;
-			case 11: i = R11;
-			case 12: i = R12;
-			case 13: i = R13;
-			case 14: i = R14;
-			case 15: i = R15;
+			case 1: 
+				i = R1;
+				break;
+			case 2: 
+				i = R2;
+				break;
+			case 3: 
+				i = R3;
+				break;
+			case 4: 
+				i = R4;
+				break;
+			case 5: 
+				i = R5;
+				break;
+			case 6: 
+				i = R6;
+				break;
+			case 7: 
+				i = R7;
+				break;
+			case 8: 
+				i = R8;
+				break;
+			case 9: 
+				i = R9;
+				break;
+			case 10: 
+				i = R10;
+				break;
+			case 11: 
+				i = R11;
+				break;
+			case 12: 
+				i = R12;
+				break;
+			case 13: 
+				i = R13;
+				break;
+			case 14: 
+				i = R14;
+				break;
+			case 15: 
+				i = R15;
+				break;
 			default: 
 				System.out.println(number+"is not a valid register!");
 				i=0;
 				end();
+				break;
 		}
-		A=(byte)i;
+		A=i;
 		
-		SR = (byte) (SR & Byte.valueOf("11111100")); //set last 2 bit to 0
+		SR = (byte) (SR & Byte.valueOf("-1111100",2)); //set last 2 bits to 0
 		if(A>0) {
-			SR = (byte) (SR | Byte.valueOf("00000010")); //set bit before last to 1
+			SR = (byte) (SR | Byte.valueOf("00000010",2)); //set bit before last to 1
 		}else {
 			if(A<0) {
-				SR = (byte) (SR | Byte.valueOf("00000001"));//set last bit to 1
+				SR = (byte) (SR | Byte.valueOf("00000001",2));//set last bit to 1
 			}
 		}
 		BZ++;
@@ -427,67 +526,129 @@ public class Vam extends JFrame{
 		int i;
 		int temp;
 		switch(number) {
-			case 1: i = R1;
-			case 2: i = R2;
-			case 3: i = R3;
-			case 4: i = R4;
-			case 5: i = R5;
-			case 6: i = R6;
-			case 7: i = R7;
-			case 8: i = R8;
-			case 9: i = R9;
-			case 10: i = R10;
-			case 11: i = R11;
-			case 12: i = R12;
-			case 13: i = R13;
-			case 14: i = R14;
-			case 15: i = R15;
-			default: 
-				System.out.println(number+"is not a valid register!");
-				i=0;
-				end();
-		}
+		case 1: 
+			i = R1;
+			break;
+		case 2: 
+			i = R2;
+			break;
+		case 3: 
+			i = R3;
+			break;
+		case 4: 
+			i = R4;
+			break;
+		case 5: 
+			i = R5;
+			break;
+		case 6: 
+			i = R6;
+			break;
+		case 7: 
+			i = R7;
+			break;
+		case 8: 
+			i = R8;
+			break;
+		case 9: 
+			i = R9;
+			break;
+		case 10: 
+			i = R10;
+			break;
+		case 11: 
+			i = R11;
+			break;
+		case 12: 
+			i = R12;
+			break;
+		case 13: 
+			i = R13;
+			break;
+		case 14: 
+			i = R14;
+			break;
+		case 15: 
+			i = R15;
+			break;
+		default: 
+			System.out.println(number+"is not a valid register!");
+			i=0;
+			end();
+			break;
+	}
 		temp=A*i;
 		
-		SR = (byte) (SR & Byte.valueOf("11111100")); //set last 2 bit to 0
+		SR = (byte) (SR & Byte.valueOf("-1111100",2)); //set last 2 bits to 0
 		if(temp>0) {
-			SR = (byte) (SR | Byte.valueOf("00000010")); //set bit before last to 1
+			SR = (byte) (SR | Byte.valueOf("00000010",2)); //set bit before last to 1
 		}else {
 			if(temp<0) {
-				SR = (byte) (SR | Byte.valueOf("00000001"));//set last bit to 1
+				SR = (byte) (SR | Byte.valueOf("00000001",2));//set last bit to 1
 			}
 		}
 		if(temp<128&&temp>-129) {
 			A=(byte)temp;
-			SR = (byte) (SR & Byte.valueOf("11111011"));//set 6. bit to 0
-										//           11111111112222222222333
-		}else {							//  12345678901234567890123456789012
-			A = (byte)(temp & Byte.valueOf("00000000000000000000000011111111"));
-			SR = (byte) (SR | Byte.valueOf("00000100"));//set 6. bit to 1
+			SR = (byte) (SR & Byte.valueOf("-1111011",2));//set 6. bit to 0
+											//          11111111112222222222333
+		}else {								// 12345678901234567890123456789012
+			A = (byte)(temp & Integer.valueOf("00000000000000000000000011111111",2));
+			SR = (byte) (SR | Byte.valueOf("00000100",2));//set 6. bit to 1
 		}
 		BZ++;
 	}
 	
 	private void store(int number) {
 		switch(number) {
-			case 1: R1 = A;
-			case 2: R2 = A;
-			case 3: R3 = A;
-			case 4: R4 = A;
-			case 5: R5 = A;
-			case 6: R6 = A;
-			case 7: R7 = A;
-			case 8: R8 = A;
-			case 9: R9 = A;
-			case 10: R10 = A;
-			case 11: R11 = A;
-			case 12: R12 = A;
-			case 13: R13 = A;
-			case 14: R14 = A;
-			case 15: R15 = A;
+			case 1: 
+				R1 = A;
+				break;
+			case 2: 
+				R2 = A;
+				break;
+			case 3: 
+				R3 = A;
+				break;
+			case 4: 
+				R4 = A;
+				break;
+			case 5: 
+				R5 = A;
+				break;
+			case 6: 
+				R6 = A;
+				break;
+			case 7: 
+				R7 = A;
+				break;
+			case 8: 
+				R8 = A;
+				break;
+			case 9: 
+				R9 = A;
+				break;
+			case 10: 
+				R10 = A;
+				break;
+			case 11: 
+				R11 = A;
+				break;
+			case 12: 
+				R12 = A;
+				break;
+			case 13: 
+				R13 = A;
+				break;
+			case 14: 
+				R14 = A;
+				break;
+			case 15: 
+				R15 = A;
+				break;
 			default: 
 				System.out.println(number+"is not a valid register!");
 				end();
+				break;
 		}
 	}
 	
@@ -495,43 +656,74 @@ public class Vam extends JFrame{
 		int i;
 		int temp;
 		switch(number) {
-			case 1: i = R1;
-			case 2: i = R2;
-			case 3: i = R3;
-			case 4: i = R4;
-			case 5: i = R5;
-			case 6: i = R6;
-			case 7: i = R7;
-			case 8: i = R8;
-			case 9: i = R9;
-			case 10: i = R10;
-			case 11: i = R11;
-			case 12: i = R12;
-			case 13: i = R13;
-			case 14: i = R14;
-			case 15: i = R15;
-			default: 
-				System.out.println(number+"is not a valid register!");
-				i=0;
-				end();
-		}
+		case 1: 
+			i = R1;
+			break;
+		case 2: 
+			i = R2;
+			break;
+		case 3: 
+			i = R3;
+			break;
+		case 4: 
+			i = R4;
+			break;
+		case 5: 
+			i = R5;
+			break;
+		case 6: 
+			i = R6;
+			break;
+		case 7: 
+			i = R7;
+			break;
+		case 8: 
+			i = R8;
+			break;
+		case 9: 
+			i = R9;
+			break;
+		case 10: 
+			i = R10;
+			break;
+		case 11: 
+			i = R11;
+			break;
+		case 12: 
+			i = R12;
+			break;
+		case 13: 
+			i = R13;
+			break;
+		case 14: 
+			i = R14;
+			break;
+		case 15: 
+			i = R15;
+			break;
+		default: 
+			System.out.println(number+"is not a valid register!");
+			i=0;
+			end();
+			break;
+	}
 		temp=A-i;
 		
-		SR = (byte) (SR & Byte.valueOf("11111100")); //set last 2 bit to 0
+		SR = (byte) (SR & Byte.valueOf("-1111100",2)); //set last 2 bits to 0
 		if(temp>0) {
-			SR = (byte) (SR | Byte.valueOf("00000010")); //set bit before last to 1
+			SR = (byte) (SR | Byte.valueOf("00000010",2)); //set bit before last to 1
 		}else {
 			if(temp<0) {
-				SR = (byte) (SR | Byte.valueOf("00000001"));//set last bit to 1
+				SR = (byte) (SR | Byte.valueOf("00000001",2));//set last bit to 1
 			}
 		}
 		if(temp<128&&temp>-129) {
 			A=(byte)temp;
-			SR = (byte) (SR & Byte.valueOf("11111011"));//set 6. bit to 0
-										//           11111111112222222222333
-		}else {							//  12345678901234567890123456789012
-			A = (byte)(temp & Byte.valueOf("00000000000000000000000011111111"));
-			SR = (byte) (SR | Byte.valueOf("00000100"));//set 6. bit to 1
+			SR = (byte) (SR & Byte.valueOf("-1111011",2));//set 6. bit to 0
+											//          11111111112222222222333
+		}else {								// 12345678901234567890123456789012
+			A = (byte)(temp & Integer.valueOf("00000000000000000000000011111111",2));
+			SR = (byte) (SR | Byte.valueOf("00000100",2));//set 6. bit to 1
 		}
 		BZ++;
 	}
@@ -634,40 +826,57 @@ public class Vam extends JFrame{
 				switch(input.charAt(2)){
 				case 'E'://JGE
 					execute(input.substring(0, 3), input.substring(3));
+					break;
 				case 'T'://JGT
 					execute(input.substring(0, 3), input.substring(3));
+					break;
 				default:
 					def(input);
+					break;
 				}
+				break;
 			case 'L'://JL
 				switch(input.charAt(2)){
 				case 'E'://JLE
 					execute(input.substring(0, 3), input.substring(3));
+					break;
 				case 'T'://JLT
 					execute(input.substring(0, 3), input.substring(3));
+					break;
 				default:
 					def(input);
+					break;
 				}
+				break;
 			case 'N'://JN
 				switch(input.charAt(2)){
 				case 'E'://JNE
 					execute(input.substring(0, 3), input.substring(3));
+					break;
 				default:
 					def(input);
+					break;
 				}
+				break;
 			case 'U'://JU
 				switch(input.charAt(2)){
 				case 'M'://JUM
 					switch(input.charAt(3)){
 					case 'P'://JUMP
 						execute(input.substring(0, 4), input.substring(4));
+						break;
 					default:
 						def(input);
+						break;
 					}
+					break;
 				default:
 					def(input);
-				}				
+					break;
+				}	
+				break;			
 			}
+			break;
 		case 'L'://L
 			switch(input.charAt(1)){
 			case 'O'://LO
@@ -676,15 +885,22 @@ public class Vam extends JFrame{
 					switch(input.charAt(3)){
 					case 'D'://LOAD
 						execute(input.substring(0, 4), input.substring(4));
+						break;
 					default:
 						def(input);
+						break;
 					}
+					break;
 				default:
 					def(input);
+					break;
 				}
+				break;
 			default:
 				def(input);
+				break;
 			}
+			break;
 			
 		case 'M'://M
 			switch(input.charAt(1)){
@@ -694,15 +910,22 @@ public class Vam extends JFrame{
 					switch(input.charAt(3)){
 					case 'T'://MULT
 						execute(input.substring(0, 4), input.substring(4));
+						break;
 					default:
 						def(input);
+						break;
 					}
+					break;
 				default:
 					def(input);
+					break;
 				}
+				break;
 			default:
 				def(input);
+				break;
 			}
+			break;
 			
 		case 'S'://S
 			switch(input.charAt(1)){
@@ -714,28 +937,41 @@ public class Vam extends JFrame{
 						switch(input.charAt(4)){
 						case 'E'://STORE
 							execute(input.substring(0, 5), input.substring(5));
+							break;
 						default:
 							def(input);
+							break;
 						}
+						break;
 					default:
 						def(input);
+						break;
 					}
+					break;
 				default:
 					def(input);
+					break;
 				}
+				break;
 			case 'U'://SU
 				switch(input.charAt(2)){
 				case 'B'://SUB
 					execute(input.substring(0, 3), input.substring(3));
+					break;
 				default:
 					def(input);
+					break;
 				}
+				break;
 			default:
 				def(input);
+				break;
 			}
+			break;
 		
 		default:
 			def(input);
+			break;
 		}
 	}
 	
@@ -746,9 +982,9 @@ public class Vam extends JFrame{
 
 /* Just a simple program to test:
 DLOAD 10
-LOAD 1
+STORE 1
 DLOAD 2
 ADD 1
-LOAD 2
+STORE 2
 END
  */
