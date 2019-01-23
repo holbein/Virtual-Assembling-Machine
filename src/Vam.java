@@ -60,11 +60,11 @@ public class Vam extends JFrame{
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		
 		List <Image> imgs = new ArrayList<Image>();
-		imgs.add(new ImageIcon(getClass().getResource("resources/VAM_img_128x128.png")).getImage());
-		imgs.add(new ImageIcon(getClass().getResource("resources/VAM_img_64x64.png")).getImage());
-		imgs.add(new ImageIcon(getClass().getResource("resources/VAM_img_32x32.png")).getImage());
-		imgs.add(new ImageIcon(getClass().getResource("resources/VAM_img_16x16.png")).getImage());
-		imgs.add(new ImageIcon(getClass().getResource("resources/VAM_img_8x8.png")).getImage());
+		imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_128x128.png")).getImage());
+		imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_64x64.png")).getImage());
+		imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_32x32.png")).getImage());
+		imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_16x16.png")).getImage());
+		imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_8x8.png")).getImage());
 		setIconImages(imgs);
 		
 		textArea.getDocument().addDocumentListener(new MyDocumentListener());
