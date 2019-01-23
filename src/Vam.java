@@ -9,7 +9,10 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 
+@SuppressWarnings("serial")
 public class Vam extends JFrame{
+	
+	private static final String version = "1.0.1";
 	
 	private static final int FRAME_WIDTH = 800;
 	private static final int FRAME_HEIGHT = 600;
@@ -56,7 +59,7 @@ public class Vam extends JFrame{
 		setSize(FRAME_WIDTH, FRAME_HEIGHT);
 		setResizable(false);
 		setLayout(new GridLayout(1, 2));
-		setTitle("Virtual Assembler Machine");
+		setTitle("Virtual Assembling Machine v." + version);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		
 		List <Image> imgs = new ArrayList<Image>();
@@ -239,6 +242,7 @@ public class Vam extends JFrame{
 	}
 
 	
+	@SuppressWarnings("unused")
 	private void def(String input) {//default
         String caller = Thread.currentThread().getStackTrace()[2].getMethodName(); //for debug purposes: shows in which method def(String) was called
         int lineNo = Thread.currentThread().getStackTrace()[2].getLineNumber(); //for debug purposes: show in which line def(String) was called
