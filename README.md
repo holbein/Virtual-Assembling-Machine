@@ -51,3 +51,17 @@ The commands:
 - END:
     - increases the value in BZ by 1
     - terminates the program run
+    
+   
+Other important stuff:
+  - Rx:
+    - a register you can use to save numbers (1 Byte)
+    - this virtual machine has got 15 (x can be an number from 1 to 15)
+  - A:
+    - the accumulator contains the value for the next calculation and gets its result
+  - BZ:
+    - contains the address of the next command (the line number)
+    - if you change this number, you can jump to an other part of your code
+  - SR: 
+    - the Status Register contains the flags whether the result of the last logical operation was too big for one byte (Overflow) an if it was      bigger or smaller than zero
+    
