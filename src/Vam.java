@@ -585,7 +585,7 @@ public class Vam extends JFrame{
 			case "LOAD": case "STORE": case "ADD": case "SUB": case "MULT": case "DIV":{
 				try {
 					int number = Integer.parseInt(input.substring(space+1));
-					if(0 < number && number < 0) {
+					if(0 < number && number < 16) {
 						execute(com, number);
 					}else def(input);
 				}catch(Exception e) {
