@@ -44,7 +44,7 @@ public class Vam extends JFrame{
 			private JTextArea textArea = new JTextArea(numberOfLines, 30);
 	
 	private JPanel panelRight;
-		private JLabel[][] labels = new JLabel[2][18];
+		private JLabel[][] labels = new JLabel[3][18];
 		private JButton start;
 		private JButton reset;
 	
