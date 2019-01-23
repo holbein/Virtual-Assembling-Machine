@@ -613,7 +613,6 @@ public class Vam extends JFrame{
 		}
 		BZ++;
 	}
-	
 }
 
 /* Just a simple program to test:
