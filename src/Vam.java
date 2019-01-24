@@ -373,7 +373,6 @@ public class Vam extends JFrame{
 	}
 
 	
-	@SuppressWarnings("unused")
 	private void def(String input) {//default
         String caller = Thread.currentThread().getStackTrace()[2].getMethodName(); //for debug purposes: shows in which method def(String) was called
         int lineNo = Thread.currentThread().getStackTrace()[2].getLineNumber(); //for debug purposes: show in which line def(String) was called
