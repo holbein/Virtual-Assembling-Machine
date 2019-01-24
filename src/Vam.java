@@ -20,7 +20,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 @SuppressWarnings("serial")
 public class Vam extends JFrame{
 	
-	private static final String version = "1.0.1";
+	private static final String version = "1.1.0";
 	
 	private static final int FRAME_WIDTH = 800;
 	private static final int FRAME_HEIGHT = 600;
