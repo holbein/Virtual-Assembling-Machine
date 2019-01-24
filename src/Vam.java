@@ -56,6 +56,14 @@ public class Vam extends JFrame{
 	private JPanel errorPanel = new JPanel();
 	private JScrollPane errorScroll = new JScrollPane(errorPanel);
 	
+	private JMenuBar bar;
+	private JMenu menu;
+	private JMenuItem saveAs;
+	private JMenuItem save;
+	private JMenuItem open;
+	
+	private String path = "";
+	
 	Vam(){
 		setSize(FRAME_WIDTH, FRAME_HEIGHT);
 		setResizable(false);
@@ -92,41 +100,59 @@ public class Vam extends JFrame{
 	}
 
 	private void setMenu() {
-		JMenuBar bar = new JMenuBar();
-		JMenu menu = new JMenu("File");
-		JMenuItem exp = new JMenuItem("Save");
-		JMenuItem imp = new JMenuItem("Open");
+		bar = new JMenuBar();
+		menu = new JMenu("File");
+		saveAs = new JMenuItem("Save As...");
+		save = new JMenuItem("Save");
+		open = new JMenuItem("Open File...");
 		
-		exp.addActionListener(new ActionListener() {			
+		
+		saveAs.addActionListener(new ActionListener() {			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				exp();
+				saveAs();
 			}
 		});
 		
-		imp.addActionListener(new ActionListener() {			
+		save.addActionListener(new ActionListener() {			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				imp();
+				save();
 			}
 		});
 		
-		menu.add(exp);
-		menu.add(imp);
+		open.addActionListener(new ActionListener() {			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				open();
+			}
+		});
+				
+		menu.add(save);
+		menu.add(saveAs);
+		menu.add(open);
+		
+		save.setEnabled(false);
 		
 		bar.add(menu);
 		
 		setJMenuBar(bar);
 	}
 	
-	private void exp() {
+	private void saveAs() {
 		JFileChooser choose = new JFileChooser();
 		choose.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		choose.setFileFilter(new FileNameExtensionFilter(".txt", "txt"));
-		choose.setSelectedFile(new File("MyVAMprogram.txt"));
+		if(!path.equals("")) {
+			choose.setSelectedFile(new File(path));
+		}else {
+			choose.setSelectedFile(new File("MyVAMprogram.txt"));
+		}
 		
 		if(choose.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
 			File out = choose.getSelectedFile();
+			path = out.getAbsolutePath();
+			save.setEnabled(true);
 			try {
 				PrintWriter writer = new PrintWriter(out);
 				writer.print(textArea.getText());
@@ -137,14 +163,34 @@ public class Vam extends JFrame{
 		}
 	}
 	
-	private void imp() {
+	private void save() {
+		if(!path.equals("")) {
+			File out = new File(path);
+			try {
+				PrintWriter writer = new PrintWriter(out);
+				writer.print(textArea.getText());
+				writer.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}else {
+			save.setEnabled(false);
+		}
+	}
+	
+	private void open() {
 		try {
 			JFileChooser choose = new JFileChooser();
 			choose.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			choose.setFileFilter(new FileNameExtensionFilter(".txt", "txt"));
+			if(!path.equals("")) {
+				choose.setSelectedFile(new File(path));
+			}
 			
 			if(choose.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
 				File file = choose.getSelectedFile();
+				path = file.getAbsolutePath();
+				save.setEnabled(true);
 				BufferedReader br = new BufferedReader( new FileReader(file));
 				Object[] str = br.lines().toArray();
 				String whole = "";
