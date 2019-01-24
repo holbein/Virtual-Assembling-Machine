@@ -18,14 +18,14 @@ public class Vam extends JFrame{
 	private static final int FRAME_WIDTH = 800;
 	private static final int FRAME_HEIGHT = 600;
 	
-	boolean stop;
-	private static HashSet<Integer> errorLineSeen = new HashSet<Integer>(); 
+	private boolean stop = false;
+	private HashSet<Integer> errorLineSeen = new HashSet<Integer>();
 	
-	public static byte SR; //Aufbau: (0,0,0,0,0,Overflow,GraterZero,SmallerZero)
-	public static byte BZ;
-	public static byte A;
+	public byte SR; //Aufbau: (0,0,0,0,0,Overflow,GraterZero,SmallerZero)
+	public byte BZ;
+	public byte A;
 	
-	public static final byte[] R = new byte[16];
+	public final byte[] R = new byte[16];
 	
 	private int numberOfLines = 1;
 	
