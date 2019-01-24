@@ -132,14 +132,9 @@ public class Vam extends JFrame{
 				writer.print(textArea.getText());
 				writer.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		
 		}
-		
-		
-		
 	}
 	
 	private void imp() {
@@ -362,8 +357,13 @@ public class Vam extends JFrame{
 		}
 		
 		String com = input.substring(0, space);
-		
-		execute(com, Integer.parseInt(input.substring(space+1)));
+		try {
+			execute(com, Integer.parseInt(input.substring(space+1)));
+		}catch (Exception e) {
+			// TODO: handle exception
+			def(" '"+input.substring(space+1)+"'"+" is not a valid number!");
+			machine_end(0);
+		}
 	}
 
 	
@@ -401,6 +401,7 @@ public class Vam extends JFrame{
 	
 	//calls the right method 
 	private void execute(String command, int rest) {
+
 		switch(command) {
 		case "END":
 			end();
@@ -497,7 +498,7 @@ public class Vam extends JFrame{
 		if(number<128&&number>-129) {
 			A = (byte)number;
 		}else {
-			System.out.println(number+" is too big");
+			def(" '"+number+"'"+" is a too big number");
 		}
 		BZ++;
 	}
