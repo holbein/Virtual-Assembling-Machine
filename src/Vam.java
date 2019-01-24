@@ -325,46 +325,46 @@ public class Vam extends JFrame{
 			end();
 			break;
 		case "ADD":
-			add(rest);
+			machine_add(rest);
 			break;
 		case "DLOAD":
-			dload(rest);
+			machine_dload(rest);
 			break;
 		case "DIV":
-			div(rest);
+			machine_div(rest);
 			break;
 		case "JEQ":
-			jeq(rest);
+			machine_jeq(rest);
 			break;
 		case "JGE":
-			jge(rest);
+			machine_jge(rest);
 			break;
 		case "JGT":
-			jgt(rest);
+			machine_jgt(rest);
 			break;
 		case "JLE":
-			jle(rest);
+			machine_jle(rest);
 			break;
 		case "JLT":
-			jlt(rest);
+			machine_jlt(rest);
 			break;
 		case "JNE":
-			jne(rest);
+			machine_jne(rest);
 			break;
 		case "JUMP":
-			jump(rest);
+			machine_jump(rest);
 			break;
 		case "LOAD":
-			load(rest);
+			machine_load(rest);
 			break;
 		case "MULT":
-			mult(rest);
+			machine_mult(rest);
 			break;
 		case "STORE":
-			store(rest);
+			machine_store(rest);
 			break;
 		case "SUB":
-			sub(rest);
+			machine_sub(rest);
 			break;
 		default:
 			def(command+" "+rest);
@@ -377,7 +377,12 @@ public class Vam extends JFrame{
 		BZ++;
 	}
 	
-	private void add(int number) {
+	private void machine_end(int unused) {
+		stop = true;
+		BZ++;
+	}
+	
+	private void machine_add(int number) {
 		int temp = -1;
 		try {
 			temp = A + R[number];
@@ -407,7 +412,7 @@ public class Vam extends JFrame{
 		
 	}
 	
-	private void dload(int number) {
+	private void machine_dload(int number) {
 		if(number<128&&number>-129) {
 			A = (byte)number;
 		}else {
@@ -416,7 +421,7 @@ public class Vam extends JFrame{
 		BZ++;
 	}
 	
-	private void div(int number) {
+	private void machine_div(int number) {
 		int temp = -1;
 		try {
 			temp = A / R[number];
@@ -444,7 +449,7 @@ public class Vam extends JFrame{
 		BZ++;
 	}
 	
-	private void jeq(int number) {
+	private void machine_jeq(int number) {
 		String status = String.format("%8s", Integer.toBinaryString(SR & 0xFF)).replace(' ', '0');
 		if(status.charAt(6)=='0'&&status.charAt(7)=='0') {
 			BZ=(byte)number;
@@ -453,7 +458,7 @@ public class Vam extends JFrame{
 		}
 	}
 	
-	private void jge(int number) {
+	private void machine_jge(int number) {
 		String status = String.format("%8s", Integer.toBinaryString(SR & 0xFF)).replace(' ', '0');
 		if(status.charAt(7)=='0') {
 			BZ=(byte)number;
@@ -462,7 +467,7 @@ public class Vam extends JFrame{
 		}
 	}
 	
-	private void jgt(int number) {
+	private void machine_jgt(int number) {
 		String status = String.format("%8s", Integer.toBinaryString(SR & 0xFF)).replace(' ', '0');
 		if(status.charAt(6)=='1') {
 			BZ=(byte)number;
@@ -471,7 +476,7 @@ public class Vam extends JFrame{
 		}
 	}
 	
-	private void jle(int number) {
+	private void machine_jle(int number) {
 		String status = String.format("%8s", Integer.toBinaryString(SR & 0xFF)).replace(' ', '0');
 		if(status.charAt(6)=='0') {
 			BZ=(byte)number;
@@ -480,7 +485,7 @@ public class Vam extends JFrame{
 		}
 	}
 	
-	private void jlt(int number) {
+	private void machine_jlt(int number) {
 		String status = String.format("%8s", Integer.toBinaryString(SR & 0xFF)).replace(' ', '0');
 		if(status.charAt(7)=='0') {
 			BZ=(byte)number;
@@ -489,7 +494,7 @@ public class Vam extends JFrame{
 		}
 	}
 	
-	private void jne(int number) {
+	private void machine_jne(int number) {
 		String status = String.format("%8s", Integer.toBinaryString(SR & 0xFF)).replace(' ', '0');
 		if(status.charAt(6)=='1'||status.charAt(7)=='1') {
 			BZ=(byte)number;
@@ -498,11 +503,11 @@ public class Vam extends JFrame{
 		}
 	}
 	
-	private void jump(int number) {
+	private void machine_jump(int number) {
 		BZ = (byte)number;
 	}
 	
-	private void load(int number) {
+	private void machine_load(int number) {
 		try {
 			A = R[number];
 		}catch(Exception e) {
@@ -522,7 +527,7 @@ public class Vam extends JFrame{
 		BZ++;
 	}
 	
-	private void mult(int number) {
+	private void machine_mult(int number) {
 		
 		int temp = -1;
 		try {
@@ -552,7 +557,7 @@ public class Vam extends JFrame{
 		BZ++;
 	}
 	
-	private void store(int number) {
+	private void machine_store(int number) {
 		
 		try {
 			R[number] = A;
@@ -564,7 +569,7 @@ public class Vam extends JFrame{
 		BZ++;
 	}
 	
-	private void sub(int number) {
+	private void machine_sub(int number) {
 		int temp = -1;
 		try {
 			temp = A - R[number];
