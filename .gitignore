@@ -1,9 +1,5 @@
-
+.directory
 .classpath
 .project
 .settings/org.eclipse.jdt.core.prefs
-bin/Vam.class
-bin/Code.class
-bin/Vam$1.class
-bin/Vam$2.class
-bin/Vam$MyDocumentListener.class
+bin/*.class
