@@ -2,6 +2,7 @@
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import javax.swing.*;
@@ -18,23 +19,29 @@ public class Vam extends JFrame{
 	private static final int FRAME_HEIGHT = 600;
 	
 	boolean stop;
+	private static HashSet<Integer> errorLineSeen = new HashSet<Integer>(); 
 	
 	public static byte SR; //Aufbau: (0,0,0,0,0,Overflow,GraterZero,SmallerZero)
 	public static byte BZ;
 	public static byte A;
 	
-	public static byte[] R = new byte[16];
+	public static final byte[] R = new byte[16];
 	
 	private int numberOfLines = 1;
 	
 	private JPanel panelLeft = new JPanel();
 		private JScrollPane scrollPane = new JScrollPane(panelLeft);
-		private JPanel lineNumbering = new JPanel();
+			private JPanel lineNumbering = new JPanel();
+			private static ImageIcon ARROW_EMPTY = new ImageIcon(Vam.class.getResource("resources/arrow_empty_16x12.png"));
+			private static ImageIcon ARROW_GREEN = new ImageIcon(Vam.class.getResource("resources/arrow_green_16x12.png"));
+			private static ImageIcon ERROR = new ImageIcon(Vam.class.getResource("resources/error_16x15.png"));
+			private static ImageIcon ARROW_ERROR = new ImageIcon(Vam.class.getResource("resources/arrow_error_16x15.png"));
 			private JTextArea textArea = new JTextArea(numberOfLines, 30);
 	
 	private JPanel panelRight;
 		private JLabel[][] labels = new JLabel[3][19];
 		private JButton start;
+		private JButton oneStep;
 		private JButton reset;
 	
 	private JFrame errorFrame; //small JFrame with error message, that pops up when there was an error
@@ -59,15 +66,7 @@ public class Vam extends JFrame{
 		textArea.getDocument().addDocumentListener(new MyDocumentListener());
 		scrollPane.getVerticalScrollBar().setUnitIncrement(10); //sets the scroll-speed
 		
-		lineNumbering.setLayout(new GridLayout(numberOfLines, 2));
-		for(int i=0; i<numberOfLines; ++i) {
-			if(numberOfLines<10) {
-				lineNumbering.add(new JLabel(String.valueOf(numberOfLines)+"   "));
-			} else {
-				lineNumbering.add(new JLabel(String.valueOf(numberOfLines)));
-			}
-			lineNumbering.add(new JLabel(":"));
-		}
+		reDrawLeftPanel();
 		
 		panelLeft.add(lineNumbering);
 		panelLeft.add(textArea);
@@ -116,6 +115,12 @@ public class Vam extends JFrame{
             }
 		});
 
+		oneStep = new JButton(new AbstractAction("One step"){
+            public void actionPerformed(ActionEvent e) {
+            	oneStep();
+            }
+		});
+		
 		reset = new JButton(new AbstractAction("Reset"){
             public void actionPerformed(ActionEvent e) {
             	reset();
@@ -123,6 +128,7 @@ public class Vam extends JFrame{
 		});
 		
 		panelRight.add(start);
+		panelRight.add(oneStep);
 		panelRight.add(reset);
 	}
 	
@@ -133,14 +139,60 @@ public class Vam extends JFrame{
 			labels[2][i].setText(Byte.toString(by[i]));
 		}
 	}
+
+	//call this method, to update the values 
+	private void reDrawLeftPanel() {
+		lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 3));
+		while(lineNumbering.getComponentCount() != 0) {
+			lineNumbering.remove(0);
+		}
+		
+		for(int i=0; i<numberOfLines; ++i) {
+			if (errorLineSeen.contains(i+1)){
+				if(BZ == i+1) {
+					lineNumbering.add(new JLabel(ARROW_ERROR));
+				} else {
+					lineNumbering.add(new JLabel(ERROR));
+				}
+			}else {
+				if(BZ == i+1) {
+					lineNumbering.add(new JLabel(ARROW_GREEN));
+				} else {
+					lineNumbering.add(new JLabel(ARROW_EMPTY));
+				}
+			}
+			
+			if(numberOfLines<10) {
+				lineNumbering.add(new JLabel(String.valueOf(i+1)+"   "));
+			} else {
+				lineNumbering.add(new JLabel(String.valueOf(i+1)));
+			}
+			lineNumbering.add(new JLabel(":"));
+		}
+	}
 	
     class MyDocumentListener implements DocumentListener {
         final String newline = "\n";
  
         public void insertUpdate(DocumentEvent e) {
-        	lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 2));
+        	lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 3));
 			while(textArea.getLineCount() > numberOfLines) {
 				numberOfLines++;
+				
+				if (errorLineSeen.contains(numberOfLines)){
+					if((BZ-1) == numberOfLines) {
+						lineNumbering.add(new JLabel(ARROW_ERROR));
+					} else {
+						lineNumbering.add(new JLabel(ERROR));
+					}
+				}else {
+					if((BZ-1) == numberOfLines) {
+						lineNumbering.add(new JLabel(ARROW_GREEN));
+					} else {
+						lineNumbering.add(new JLabel(ARROW_EMPTY));
+					}
+				}
+				
 				if(numberOfLines<10) {
 					lineNumbering.add(new JLabel(String.valueOf(numberOfLines)+"  "));
 				} else {
@@ -151,8 +203,9 @@ public class Vam extends JFrame{
         }
         
         public void removeUpdate(DocumentEvent e) {
-        	lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 2));
+        	lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 3));
 			while(textArea.getLineCount() < numberOfLines) {
+				lineNumbering.remove(lineNumbering.getComponentCount()-1);
 				lineNumbering.remove(lineNumbering.getComponentCount()-1);
 				lineNumbering.remove(lineNumbering.getComponentCount()-1);
 				numberOfLines--;
@@ -175,6 +228,9 @@ public class Vam extends JFrame{
 	}
 
 	private void reset() {
+		errorLineSeen.clear();
+		errorPanel.removeAll();
+		
 		stop = false;
 		SR = 0;
 		BZ = 1;
@@ -187,6 +243,17 @@ public class Vam extends JFrame{
 		byte[] by = {SR, BZ, A, R[0], R[1], R[2], R[3], R[4], R[5], R[6], R[7], R[8], R[9], R[10], R[11], R[12], R[13], R[14], R[15]};
 		if(panelRight == null) rightPanel(by);
 		else reDrawRightPanel(by);
+		reDrawLeftPanel();
+	}
+	
+	private void oneStep() {
+		if(!stop && 0 < BZ && BZ <= textArea.getLineCount()){
+			check(getTextInLine(BZ).trim());
+		}
+		
+		byte[] by = {SR, BZ, A, R[0], R[1], R[2], R[3], R[4], R[5], R[6], R[7], R[8], R[9], R[10], R[11], R[12], R[13], R[14], R[15]};
+		reDrawRightPanel(by);
+		reDrawLeftPanel();
 	}
 	
 	private void start() {
@@ -195,6 +262,7 @@ public class Vam extends JFrame{
 		}
 		byte[] by = {SR, BZ, A, R[0], R[1], R[2], R[3], R[4], R[5], R[6], R[7], R[8], R[9], R[10], R[11], R[12], R[13], R[14], R[15]};
 		reDrawRightPanel(by);
+		reDrawLeftPanel();
 	}
 
 	//separates the command and the rest
@@ -221,6 +289,8 @@ public class Vam extends JFrame{
 	private void def(String input) {//default
         String caller = Thread.currentThread().getStackTrace()[2].getMethodName(); //for debug purposes: shows in which method def(String) was called
         int lineNo = Thread.currentThread().getStackTrace()[2].getLineNumber(); //for debug purposes: show in which line def(String) was called
+        
+        errorLineSeen.add((int)BZ);
         
 		JLabel lError = new JLabel("Unknown command: \""+ input +"\" in line: "+ BZ +"!");
 		lError.setForeground(Color.RED);
