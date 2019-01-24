@@ -1,12 +1,25 @@
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 
 @SuppressWarnings("serial")
@@ -22,34 +35,20 @@ public class Vam extends JFrame{
 	public static byte SR; //Aufbau: (0,0,0,0,0,Overflow,GraterZero,SmallerZero)
 	public static byte BZ;
 	public static byte A;
-	public static byte R1;
-	public static byte R2;
-	public static byte R3;
-	public static byte R4;
-	public static byte R5;
-	public static byte R6;
-	public static byte R7;
-	public static byte R8;
-	public static byte R9;
-	public static byte R10;
-	public static byte R11;
-	public static byte R12;
-	public static byte R13;
-	public static byte R14;
-	public static byte R15;
 	
+	public static byte[] R = new byte[16];
 	
 	private int numberOfLines = 1;
 	
 	private JPanel panelLeft = new JPanel();
-		private JScrollPane scrollPane = new JScrollPane(panelLeft);
-		private JPanel lineNumbering = new JPanel();
-			private JTextArea textArea = new JTextArea(numberOfLines, 30);
+	private JScrollPane scrollPane = new JScrollPane(panelLeft);
+	private JPanel lineNumbering = new JPanel();
+	private JTextArea textArea = new JTextArea(numberOfLines, 30);
 	
 	private JPanel panelRight;
-		private JLabel[][] labels = new JLabel[3][18];
-		private JButton start;
-		private JButton reset;
+	private JLabel[][] labels = new JLabel[3][19];
+	private JButton start;
+	private JButton reset;
 	
 	private JFrame errorFrame; //small JFrame with error message, that pops up when there was an error
 	private JPanel errorPanel = new JPanel();
@@ -88,6 +87,7 @@ public class Vam extends JFrame{
 		
 		reset();
 		
+		setMenu();
 		add(scrollPane);
 		add(panelRight);
 		setVisible(true);
@@ -96,20 +96,93 @@ public class Vam extends JFrame{
 	public static void main(String args[]) {
 		new Vam();
 	}
+
+	private void setMenu() {
+		JMenuBar bar = new JMenuBar();
+		JMenu menu = new JMenu("File");
+		JMenuItem exp = new JMenuItem("Save");
+		JMenuItem imp = new JMenuItem("Open");
+		
+		exp.addActionListener(new ActionListener() {			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				exp();
+			}
+		});
+		
+		imp.addActionListener(new ActionListener() {			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				imp();
+			}
+		});
+		
+		menu.add(exp);
+		menu.add(imp);
+		
+		bar.add(menu);
+		
+		setJMenuBar(bar);
+	}
+	
+	private void exp() {
+		JFileChooser choose = new JFileChooser();
+		choose.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		choose.setFileFilter(new FileNameExtensionFilter(".txt", "txt"));
+		choose.setSelectedFile(new File("MyVAMprogram.txt"));
+		
+		if(choose.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+			File out = choose.getSelectedFile();
+			try {
+				PrintWriter writer = new PrintWriter(out);
+				writer.print(textArea.getText());
+				writer.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		
+		}
+		
+		
+		
+	}
+	
+	private void imp() {
+		try {
+			JFileChooser choose = new JFileChooser();
+			choose.setFileSelectionMode(JFileChooser.FILES_ONLY);
+			choose.setFileFilter(new FileNameExtensionFilter(".txt", "txt"));
+			
+			if(choose.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+				File file = choose.getSelectedFile();
+				BufferedReader br = new BufferedReader( new FileReader(file));
+				Object[] str = br.lines().toArray();
+				String whole = "";
+				for(int i = 0; i< str.length; i++) {
+					whole += str[i]+"\n";
+				}
+				br.close();
+				textArea.setText(whole);
+			} 
+		}catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 	
 	private void rightPanel(byte[] by) {
 		panelRight = new JPanel();
-		panelRight.setLayout(new GridLayout(19, 3));
+		panelRight.setLayout(new GridLayout(20, 3));
 		
 		labels[0][0] = new JLabel("SR", SwingConstants.CENTER);
 		labels[0][1] = new JLabel("BZ", SwingConstants.CENTER);
 		labels[0][2] = new JLabel("A", SwingConstants.CENTER);
 		
-		for (int i=0; i<15; ++i) {
-			labels[0][i+3] = new JLabel("R"+(i+1), SwingConstants.CENTER);
+		for (int i=0; i<16; ++i) {
+			labels[0][i+3] = new JLabel("R"+(i), SwingConstants.CENTER);
 		}
 		
-		for(int i=0; i<18; i++) {
+		for(int i=0; i<19; i++) {
 			labels[1][i] = new JLabel(String.format("%8s", Integer.toBinaryString(by[i] & 0xFF)).replace(' ', '0'), SwingConstants.CENTER);
 			labels[2][i] = new JLabel(Byte.toString(by[i]), SwingConstants.CENTER);
 			
@@ -118,7 +191,7 @@ public class Vam extends JFrame{
 			labels[2][i].setBorder(BorderFactory.createLineBorder(Color.BLACK));
 		}
 		
-		for(int i=0; i<18; i++) {
+		for(int i=0; i<19; i++) {
 			panelRight.add(labels[0][i]);
 			panelRight.add(labels[1][i]);
 			panelRight.add(labels[2][i]);
@@ -142,7 +215,7 @@ public class Vam extends JFrame{
 	
 	//call this method, to update the values 
 	private void reDrawRightPanel(byte[] by) {
-		for(int i=0; i<18; i++) {
+		for(int i=0; i<19; i++) {
 			labels[1][i].setText(String.format("%8s", Integer.toBinaryString(by[i] & 0xFF)).replace(' ', '0'));
 			labels[2][i].setText(Byte.toString(by[i]));
 		}
@@ -193,23 +266,12 @@ public class Vam extends JFrame{
 		SR = 0;
 		BZ = 1;
 		A = 0;
-		R1 = 0;
-		R2 = 0;
-		R3 = 0;
-		R4 = 0;
-		R5 = 0;
-		R6 = 0;
-		R7 = 0;
-		R8 = 0;
-		R9 = 0;
-		R10 = 0;
-		R11 = 0;
-		R12 = 0;
-		R13 = 0;
-		R14 = 0;
-		R15 = 0;
 		
-		byte[] by = {SR, BZ, A, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15};
+		for(int i=0; i<16; i++) {
+			R[i] = 0; 
+		}
+		
+		byte[] by = {SR, BZ, A, R[0], R[1], R[2], R[3], R[4], R[5], R[6], R[7], R[8], R[9], R[10], R[11], R[12], R[13], R[14], R[15]};
 		if(panelRight == null) rightPanel(by);
 		else reDrawRightPanel(by);
 	}
@@ -218,7 +280,7 @@ public class Vam extends JFrame{
 		while(!stop && 0 < BZ && BZ <= textArea.getLineCount()) {
 			check(getTextInLine(BZ).trim());
 		}
-		byte[] by = {SR, BZ, A, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15};
+		byte[] by = {SR, BZ, A, R[0], R[1], R[2], R[3], R[4], R[5], R[6], R[7], R[8], R[9], R[10], R[11], R[12], R[13], R[14], R[15]};
 		reDrawRightPanel(by);
 	}
 
@@ -254,7 +316,14 @@ public class Vam extends JFrame{
 			errorFrame = new JFrame("Error");
 			errorFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 	        errorFrame.setSize(400, 150);
-	        
+			List <Image> imgs = new ArrayList<Image>();
+			imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_128x128.png")).getImage());
+			imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_64x64.png")).getImage());
+			imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_32x32.png")).getImage());
+			imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_16x16.png")).getImage());
+			imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_8x8.png")).getImage());
+			errorFrame.setIconImages(imgs);
+			
 	        errorPanel.setLayout(new BoxLayout(errorPanel, BoxLayout.PAGE_AXIS));
 		}
 		
@@ -326,30 +395,14 @@ public class Vam extends JFrame{
 	}
 	
 	private void add(int number) {
-		int i = 0;
-		int temp;
-		switch(number) {
-			case 1: i = R1; break;
-			case 2: i = R2; break;
-			case 3: i = R3; break;
-			case 4: i = R4; break;
-			case 5: i = R5; break;
-			case 6: i = R6; break;
-			case 7: i = R7; break;
-			case 8: i = R8; break;
-			case 9: i = R9; break;
-			case 10: i = R10; break;
-			case 11: i = R11; break;
-			case 12: i = R12; break;
-			case 13: i = R13; break;
-			case 14: i = R14; break;
-			case 15: i = R15; break;
-			default: 
-				System.out.println(number+"is not a valid register!");
-				end();
-				break;
+		int temp = -1;
+		try {
+			temp = A + R[number];
+		}catch(Exception e) {
+			def(number+"is not a valid register!");
+			stop = true;
+			return;
 		}
-		temp=A+i;
 		
 		SR = (byte) (SR & Byte.valueOf("-1111100",2)); //clear last 2 bits
 		if(temp>0) {
@@ -381,31 +434,15 @@ public class Vam extends JFrame{
 	}
 	
 	private void div(int number) {
-		int i = -1;
-		switch(number) {
-			case 1: i = R1; break;
-			case 2: i = R2; break;
-			case 3: i = R3; break;
-			case 4: i = R4; break;
-			case 5: i = R5; break;
-			case 6: i = R6; break;
-			case 7: i = R7; break;
-			case 8: i = R8; break;
-			case 9: i = R9; break;
-			case 10: i = R10; break;
-			case 11: i = R11; break;
-			case 12: i = R12; break;
-			case 13: i = R13; break;
-			case 14: i = R14; break;
-			case 15: i = R15; break;
-			default: 
-				System.out.println(number+"is not a valid register!");
-				i=0;
-				end();
-				break;
+		int temp = -1;
+		try {
+			temp = A / R[number];
+		}catch(Exception e) {
+			def(number+"is not a valid register!");
+			stop = true;
+			return;
 		}
-		int temp=A/i;
-
+		
 		SR = (byte) (SR & Byte.valueOf("-1111100",2)); //set last 2 bits to 0
 		if(temp>0) {
 			SR = (byte) (SR | Byte.valueOf("00000010",2)); //set bit before last to 1
@@ -483,30 +520,13 @@ public class Vam extends JFrame{
 	}
 	
 	private void load(int number) {
-		byte i;
-		switch(number) {
-			case 1: i = R1; break;
-			case 2: i = R2; break;
-			case 3: i = R3; break;
-			case 4: i = R4; break;
-			case 5: i = R5; break;
-			case 6: i = R6; break;
-			case 7: i = R7; break;
-			case 8: i = R8; break;
-			case 9: i = R9; break;
-			case 10: i = R10; break;
-			case 11: i = R11; break;
-			case 12: i = R12; break;
-			case 13: i = R13; break;
-			case 14: i = R14; break;
-			case 15: i = R15; break;
-			default: 
-				System.out.println(number+"is not a valid register!");
-				i=0;
-				end();
-				break;
+		try {
+			A = R[number];
+		}catch(Exception e) {
+			def(number+"is not a valid register!");
+			stop = true;
+			return;
 		}
-		A=i;
 		
 		SR = (byte) (SR & Byte.valueOf("-1111100",2)); //set last 2 bits to 0
 		if(A>0) {
@@ -520,31 +540,15 @@ public class Vam extends JFrame{
 	}
 	
 	private void mult(int number) {
-		int i;
-		int temp;
-		switch(number) {
-			case 1: i = R1; break;
-			case 2: i = R2; break;
-			case 3: i = R3; break;
-			case 4: i = R4; break;
-			case 5: i = R5; break;
-			case 6: i = R6; break;
-			case 7: i = R7; break;
-			case 8: i = R8; break;
-			case 9: i = R9; break;
-			case 10: i = R10; break;
-			case 11: i = R11; break;
-			case 12: i = R12; break;
-			case 13: i = R13; break;
-			case 14: i = R14; break;
-			case 15: i = R15; break;
-			default: 
-				System.out.println(number+"is not a valid register!");
-				i=0;
-				end();
-				break;
+		
+		int temp = -1;
+		try {
+			temp = A * R[number];
+		}catch(Exception e) {
+			def(number+"is not a valid register!");
+			stop = true;
+			return;
 		}
-		temp=A*i;
 		
 		SR = (byte) (SR & Byte.valueOf("-1111100",2)); //set last 2 bits to 0
 		if(temp>0) {
@@ -566,56 +570,26 @@ public class Vam extends JFrame{
 	}
 	
 	private void store(int number) {
-		switch(number) {
-			case 1: R1 = A; break;
-			case 2: R2 = A; break;
-			case 3: R3 = A; break;
-			case 4: R4 = A; break;
-			case 5: R5 = A; break;
-			case 6: R6 = A; break;
-			case 7: R7 = A; break;
-			case 8: R8 = A; break;
-			case 9: R9 = A; break;
-			case 10: R10 = A; break;
-			case 11: R11 = A; break;
-			case 12: R12 = A; break;
-			case 13: R13 = A; break;
-			case 14: R14 = A; break;
-			case 15: R15 = A; break;
-			default: 
-				System.out.println(number+"is not a valid register!");
-				end();
-				break;
+		
+		try {
+			R[number] = A;
+		}catch(Exception e) {
+			def(number+"is not a valid register!");
+			stop = true;
+			return;
 		}
 		BZ++;
 	}
 	
 	private void sub(int number) {
-		int i;
-		int temp;
-		switch(number) {
-			case 1: i = R1; break;
-			case 2: i = R2; break;
-			case 3: i = R3; break;
-			case 4: i = R4; break;
-			case 5: i = R5; break;
-			case 6: i = R6; break;
-			case 7: i = R7; break;
-			case 8: i = R8; break;
-			case 9: i = R9; break;
-			case 10: i = R10; break;
-			case 11: i = R11; break;
-			case 12: i = R12; break;
-			case 13: i = R13; break;
-			case 14: i = R14; break;
-			case 15: i = R15; break;
-			default: 
-				System.out.println(number+"is not a valid register!");
-				i=0;
-				end();
-				break;
+		int temp = -1;
+		try {
+			temp = A - R[number];
+		}catch(Exception e) {
+			def(number+"is not a valid register!");
+			stop = true;
+			return;
 		}
-		temp=A-i;
 		
 		SR = (byte) (SR & Byte.valueOf("-1111100",2)); //set last 2 bits to 0
 		if(temp>0) {

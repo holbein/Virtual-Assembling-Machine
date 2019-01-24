@@ -7,3 +7,5 @@ bin/Code.class
 bin/Vam$1.class
 bin/Vam$2.class
 bin/Vam$MyDocumentListener.class
+VAM_program.txt
+*.class
