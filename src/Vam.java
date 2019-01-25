@@ -131,9 +131,9 @@ public class Vam extends JFrame{
 	private void setMenu() {
 		bar = new JMenuBar();
 		menu = new JMenu("File");
-		saveAs = new JMenuItem("Save As...");
-		save = new JMenuItem("Save");
-		open = new JMenuItem("Open File...");
+		saveAs = new JMenuItem("Save As...", new ImageIcon(Vam.class.getResource("resources/disk_....png")));
+		save = new JMenuItem("Save", new ImageIcon(Vam.class.getResource("resources/disk.png")));
+		open = new JMenuItem("Open File...", new ImageIcon(Vam.class.getResource("resources/folder_explore.png")));
 
 
 		saveAs.addActionListener(new ActionListener() {
