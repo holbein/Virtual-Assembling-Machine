@@ -11,6 +11,7 @@ import java.awt.event.KeyEvent;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
@@ -46,14 +47,16 @@ public class Vam extends JFrame{
 
 	private boolean processing = true;
 
-	public static final int REG_SR = 0;
-	public static final int REG_BZ = 1;
-	public static final int REG_A = 2;
-	public static final int REG_OFFSET = 3;
-	public static final int NREGS = 16;
+	private static final int REG_SR = 0;
+	private static final int REG_BZ = 1;
+	private static final int REG_A = 2;
+	private static final int REG_OFFSET = 3;
+	private static final int NREGS = 16;
 
 	//NB: fuer Regs[REG_SR] Aufbau: (0,0,0,0,0,Overflow,GreaterZero,SmallerZero)
-	public final byte[] Regs = new byte[19];
+	private final byte[] Regs = new byte[19];
+
+	private HashMap<String ,Byte> assemblyLabels = new HashMap<String, Byte>();
 
 	private int numberOfLines = 1;
 
@@ -93,19 +96,12 @@ public class Vam extends JFrame{
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 
 		List <Image> imgs = new ArrayList<Image>();
-		try
-		{
-			imgs.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_128x128.png")).getImage());
-			imgs.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_64x64.png")).getImage());
-			imgs.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_32x32.png")).getImage());
-			imgs.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_16x16.png")).getImage());
-			imgs.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_8x8.png")).getImage());
-			setIconImages(imgs);
-		}
-		catch (NullPointerException ex)
-		{
-			System.err.println("could not find resources");
-		}
+		imgs.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_128x128.png")).getImage());
+		imgs.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_64x64.png")).getImage());
+		imgs.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_32x32.png")).getImage());
+		imgs.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_16x16.png")).getImage());
+		imgs.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_8x8.png")).getImage());
+		setIconImages(imgs);
 
 		textArea.getDocument().addDocumentListener(new MyDocumentListener());
 		scrollPane.getVerticalScrollBar().setUnitIncrement(10); //sets the scroll-speed
@@ -298,13 +294,10 @@ public class Vam extends JFrame{
 	}
 
 	//call this method, to update the values
-	private void reDrawRightPanel(byte[] args) {
-		int len = args.length;
-		assert (len == Regs.length);
-
-		for(int i=0; i<len; i++) {
-			labels[1][i].setText(String.format("%8s", Integer.toBinaryString(args[i] & 0xFF)).replace(' ', '0'));
-			labels[2][i].setText(Byte.toString(args[i]));
+	private void reDrawRightPanel() {
+		for(int i=0; i<Regs.length; i++) {
+			labels[1][i].setText(String.format("%8s", Integer.toBinaryString(Regs[i] & 0xFF)).replace(' ', '0'));
+			labels[2][i].setText(Byte.toString(Regs[i]));
 		}
 	}
 
@@ -407,6 +400,7 @@ public class Vam extends JFrame{
 	private void reset() {
 		errorLineList.clear();
 		errorPanel.removeAll();
+		assemblyLabels.clear();
 
 		for(int i=0; i<Regs.length; i++) {
 			Regs[i] = 0;
@@ -417,25 +411,47 @@ public class Vam extends JFrame{
 
 		if (panelRight == null) rightPanel();
 
-		reDrawRightPanel(Regs);
+		reDrawRightPanel();
 		reDrawLeftPanel();
 	}
 
 	private void oneStep() {
-		if(processing && 0 < Regs[REG_BZ] && Regs[REG_BZ] <= textArea.getLineCount()){
-			check(getTextInLine(Regs[REG_BZ]).trim());
+//		System.out.println("| SR| BZ|  A| R0| R1| R2| R3| R4| R5| R6| R7| R8| R9|R10|R11|R12|R13|R14|R15");
+		assemblyLabels.clear();
+		for(int i=1; i<=textArea.getLineCount(); i++) {
+			if(getTextInLine(i).trim().contains(":")) {
+				if(!assemblyLabels.containsValue(i)) {
+					addAssemblyLabel(getTextInLine(i).trim().substring(0, getTextInLine(i).trim().indexOf(':')).trim(),i);
+				}
+			}
 		}
 
-		reDrawRightPanel(Regs);
+		if(processing && 0 < Regs[REG_BZ] && Regs[REG_BZ] <= textArea.getLineCount()){
+			check(getTextInLine(Regs[REG_BZ]).trim());
+//			printValues();
+		}
+
+		reDrawRightPanel();
 		reDrawLeftPanel();
 	}
 
 	private void start() {
-		while(processing && 0 < Regs[REG_BZ] && Regs[REG_BZ] <= textArea.getLineCount()) {
-			check(getTextInLine(Regs[REG_BZ]).trim());
+//		System.out.println("| SR| BZ|  A| R0| R1| R2| R3| R4| R5| R6| R7| R8| R9|R10|R11|R12|R13|R14|R15");
+		assemblyLabels.clear();
+		for(int i=1; i<=textArea.getLineCount(); i++) {
+			if(getTextInLine(i).trim().contains(":")) {
+				if(!assemblyLabels.containsValue(i)) {
+					addAssemblyLabel(getTextInLine(i).trim().substring(0, getTextInLine(i).trim().indexOf(':')).trim(), i);
+				}
+			}
 		}
 
-		reDrawRightPanel(Regs);
+		while(processing && 0 < Regs[REG_BZ] && Regs[REG_BZ] <= textArea.getLineCount()) {
+			check(getTextInLine(Regs[REG_BZ]).trim());
+//			printValues();
+		}
+
+		reDrawRightPanel();
 		reDrawLeftPanel();
 	}
 
@@ -454,34 +470,60 @@ public class Vam extends JFrame{
 				def(input);
 				return;
 			}
-			label(input.substring(0, colon));
+			if(assemblyLabels.containsKey(input.substring(0, colon)) && assemblyLabels.get(input.substring(0, colon)) != Regs[REG_BZ]) {
+				labelError("Label: \""+input+"\", used in lines "+assemblyLabels.get(input.substring(0, colon))+" and "+Regs[REG_BZ]+", is only allowed to be used once!",
+						assemblyLabels.get(input.substring(0, colon)), Regs[REG_BZ]);
+				return;
+			}
+			++Regs[REG_BZ];
+			return;
 		}
 
-        try{
-    		int rest = Integer.parseInt(input.substring(space+1));
-    		String command = input.substring(0, space);
+        String command = input.substring(0, space);
+        String arg = input.substring(space+1);
 
-    	    Method meth = this.getClass().getMethod("machine_" + command, int.class); //Only for public methods!!!
-            //public anyhow: meth.setAccessible(true);
-            meth.invoke(this, rest);
-            return;
+        // Convert to int, or see if it is a labelled line number (starts with 'J')
+        int value = -1;
+        try {
+            value = Integer.parseInt(arg);
+        } catch (NumberFormatException ex) {
+            if (command.charAt(0) != 'J' || (value = getAssemblyLabelLine(arg)) <= 0) {
+                error("Number format exception: \""+ input + "\" in line: "+Regs[REG_BZ]);
+                return;
+            }
         }
-        catch (NoSuchMethodException e) {
-        	carp("NoSuchMethod: " + input);
+
+        try {
+            Method meth = this.getClass().getMethod("machine_" + command, int.class); //Only for public methods!!!
+            //public anyhow: meth.setAccessible(true);
+            meth.invoke(this, value);
+            return;
+		} catch (NoSuchMethodException e) {
+        	def(input);
         } catch (Exception ex) {
-        	carp("Something else bad happened: " + input);
+        	error("Something else bad happened: " + input);
 		}
 	}
 
+	private void printValues() {
+		for (int i=0; i<Regs.length; i++) {
+			System.out.print("|"+String.format("%3s", Regs[i]));
+		}
+		System.out.println();
+	}
+
+	private void def(String input) {
+        error("Unknown command: \""+ input + "\" in line: "+Regs[REG_BZ]+"!");
+	}
+
 	@SuppressWarnings("unused")
-	private void carp(String text) {
+	private void error(String text) {
         String caller = Thread.currentThread().getStackTrace()[2].getMethodName(); //for debug purposes: shows in which method def(String) was called
         int lineNo = Thread.currentThread().getStackTrace()[2].getLineNumber(); //for debug purposes: show in which line def(String) was called
 
         errorLineList.add((int)Regs[REG_BZ]);
 
-        text += " line: " + Regs[REG_BZ] +"!";
-
+        System.err.println(caller+" "+lineNo);
 		System.err.println(text);
 		JLabel lError = new JLabel(text);
 		lError.setForeground(Color.RED);
@@ -505,15 +547,68 @@ public class Vam extends JFrame{
 		errorFrame.add(errorScroll);
 		errorFrame.setVisible(true);
 
+		processing = false;
 		Regs[REG_BZ]++;
 	}
 
-	private void def(String input) {
-        carp("Unknown command: \""+ input + "\"");
+	@SuppressWarnings("unused")
+	private void labelError(String text, int line1, int line2) {
+        String caller = Thread.currentThread().getStackTrace()[2].getMethodName(); //for debug purposes: shows in which method def(String) was called
+        int lineNo = Thread.currentThread().getStackTrace()[2].getLineNumber(); //for debug purposes: show in which line def(String) was called
+
+        errorLineList.add(line1);
+        errorLineList.add(line2);
+
+        System.err.println(caller+" "+lineNo);
+		System.err.println(text);
+		JLabel lError = new JLabel(text);
+		lError.setForeground(Color.RED);
+
+		if(errorFrame == null || !errorFrame.isDisplayable()) {
+			errorFrame = new JFrame("Error");
+			errorFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+	        errorFrame.setSize(400, 150);
+			List <Image> imgs = new ArrayList<Image>();
+			imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_128x128.png")).getImage());
+			imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_64x64.png")).getImage());
+			imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_32x32.png")).getImage());
+			imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_16x16.png")).getImage());
+			imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_8x8.png")).getImage());
+			errorFrame.setIconImages(imgs);
+
+	        errorPanel.setLayout(new BoxLayout(errorPanel, BoxLayout.PAGE_AXIS));
+		}
+
+		processing = false;
+		errorPanel.add(lError);
+		errorFrame.add(errorScroll);
+		errorFrame.setVisible(true);
+		Regs[REG_BZ]++;
 	}
 
-	public void label(String label) {
-		//TODO
+	private void addAssemblyLabel(String assemblyLabel, int line) {
+		try {//checks if the label could be mixed up with an integer value
+			Integer.parseInt(assemblyLabel);
+			labelError("Label: \""+assemblyLabel+":\" in line: "+line+" can be confused with a value.", line, line);
+		} catch(NumberFormatException e) {
+			if(assemblyLabel.length() != 0) {
+				if(assemblyLabels.containsKey(assemblyLabel)) {
+					labelError("Label: \""+assemblyLabel+":\", used in lines "+assemblyLabels.get(assemblyLabel)+" and "+line+", is only allowed to be used once!", assemblyLabels.get(assemblyLabel), line);
+				} else {
+					assemblyLabels.put(assemblyLabel, (byte)line);
+					//System.out.println(assemblyLabels.toString());
+				}
+			} else {
+				labelError("Label: \""+assemblyLabel+":\" in line: "+line+" is not allowed.", line, line);
+			}
+		}
+	}
+
+	private int getAssemblyLabelLine(String assemblyLabel) {
+		if(assemblyLabels.containsKey(assemblyLabel.trim())) {
+			return assemblyLabels.get(assemblyLabel.trim());
+		}
+		return -1;
 	}
 
 	public void machine_END(int unused) {
@@ -544,11 +639,9 @@ public class Vam extends JFrame{
 	}
 
 	public void machine_ADD(int number) {
-
 		processing = (number >= 0 && number < NREGS);
-		if (!processing)
-		{
-			def(number+" is not a valid register!");
+		if (!processing){
+			error(number+" in line:"+Regs[REG_BZ]+" is not a valid register!");
 			return;
 		}
 
@@ -563,7 +656,7 @@ public class Vam extends JFrame{
 		if(number<128&&number>-129) {
 			Regs[REG_A] = (byte)number;
 		}else {
-			def(" '"+number+"'"+" is a too big number");
+			error(number+" in line:"+Regs[REG_BZ]+" is a too big number");
 		}
 		Regs[REG_BZ]++;
 	}
@@ -571,7 +664,7 @@ public class Vam extends JFrame{
 	public void machine_DIV(int number) {
 		processing = (number >= 0 && number < NREGS);
 		if (!processing){
-			def(number+" is not a valid register!");
+			error(number+" in line:"+Regs[REG_BZ]+" is not a valid register!");
 			return;
 		}
 
@@ -579,8 +672,7 @@ public class Vam extends JFrame{
 		try {
 			temp = Regs[REG_A] / Regs[number+REG_OFFSET];
 		}catch(Exception e) {
-			def("division by zero!!!");
-			processing = false;
+			error("Division by zero in line"+Regs[REG_BZ]+" is not allowed");
 			return;
 		}
 
@@ -648,9 +740,8 @@ public class Vam extends JFrame{
 
 	public void machine_LOAD(int number) {
 		processing = (number >= 0 && number < NREGS);
-		if (!processing)
-		{
-			def(number+" is not a valid register!");
+		if (!processing) {
+			error(number+" in line:"+Regs[REG_BZ]+" is not a valid register!");
 			return;
 		}
 
@@ -663,9 +754,8 @@ public class Vam extends JFrame{
 
 	public void machine_MULT(int number) {
 		processing = (number >= 0 && number < NREGS);
-		if (!processing)
-		{
-			def(number+" is not a valid register!");
+		if (!processing) {
+			error(number+" in line:"+Regs[REG_BZ]+" is not a valid register!");
 			return;
 		}
 
@@ -673,8 +763,7 @@ public class Vam extends JFrame{
 		try {
 			temp = Regs[REG_A] * Regs[number+REG_OFFSET];
 		}catch(Exception e) {
-			def("hmm why bad mult??");
-			processing = false;
+			def(""+number);
 			return;
 		}
 
@@ -683,12 +772,10 @@ public class Vam extends JFrame{
 	}
 
 	public void machine_STORE(int number) {
-
 		try {
 			Regs[number+REG_OFFSET] = Regs[REG_A];
 		}catch(Exception e) {
-			def(number+"is not a valid register!");
-			processing = false;
+			error(number+" in line:"+Regs[REG_BZ]+" is not a valid register!");
 			return;
 		}
 		Regs[REG_BZ]++;
@@ -699,12 +786,11 @@ public class Vam extends JFrame{
 		try {
 			temp = Regs[REG_A] - Regs[number+REG_OFFSET];
 		}catch(Exception e) {
-			def(number+"is not a valid register!");
-			processing = false;
+			error(number+" in line:"+Regs[REG_BZ]+" is not a valid register!");
 			return;
 		}
 
-		Regs[REG_SR] = safeByteCast(temp);
+		Regs[REG_A] = safeByteCast(temp);
 		Regs[REG_BZ]++;
 	}
 }
@@ -715,5 +801,13 @@ STORE 1
 DLOAD 2
 ADD 1
 STORE 2
+END
+
+DLOAD 1
+STORE 0
+DLOAD 3
+asdf:
+SUB 0
+JGE asdf
 END
  */
