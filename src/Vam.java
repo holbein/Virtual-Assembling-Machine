@@ -1,13 +1,10 @@
 
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Image;
-import java.awt.MenuShortcut;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -86,7 +83,7 @@ public class Vam extends JFrame{
 	private JMenuItem save;
 	private JMenuItem open;
 
-	private String path = ""; // Bsp.: D:\\Eigene Dateien\\Java Eclipse\\Virtual Assembling Machine\\ 
+	private String path = ""; // Bsp.: D:\\Eigene Dateien\\Java Eclipse\\Virtual Assembling Machine\\
 
 	Vam(){
 		setSize(FRAME_WIDTH, FRAME_HEIGHT);
@@ -125,9 +122,9 @@ public class Vam extends JFrame{
 			File file = new File(args[0]); //File Association
 			vam.openFile(file);
 		}*/
-		
+
 	}
-	
+
 	private void setMenu() {
 		bar = new JMenuBar();
 		menu = new JMenu("File");
@@ -156,7 +153,7 @@ public class Vam extends JFrame{
 				open();
 			}
 		});
-		
+
 		save.setAccelerator(KeyStroke.getKeyStroke('S', Toolkit.getDefaultToolkit ().getMenuShortcutKeyMask())); //shortcut ctrl+s
 		open.setAccelerator(KeyStroke.getKeyStroke('O', Toolkit.getDefaultToolkit ().getMenuShortcutKeyMask())); //shortcut ctrl+o
 
@@ -223,7 +220,7 @@ public class Vam extends JFrame{
 			openFile(file);
 		}
 	}
-	
+
 	public void openFile(File file){
 		path = file.getAbsolutePath();
 		save.setEnabled(true);
@@ -233,14 +230,14 @@ public class Vam extends JFrame{
 			String whole = "";
 			for(int i = 0; i< str.length; i++) {
 				whole += str[i]+"\n";
-			}		
+			}
 			br.close();
-			textArea.setText(whole);	
-			
+			textArea.setText(whole);
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	private void rightPanel() {
@@ -427,7 +424,7 @@ public class Vam extends JFrame{
 		}
 
 		if(processing && 0 < Regs[REG_BZ] && Regs[REG_BZ] <= textArea.getLineCount()){
-			check(getTextInLine(Regs[REG_BZ]).trim());
+			check(getTextInLine(Regs[REG_BZ]));
 //			printValues();
 		}
 
@@ -447,7 +444,7 @@ public class Vam extends JFrame{
 		}
 
 		while(processing && 0 < Regs[REG_BZ] && Regs[REG_BZ] <= textArea.getLineCount()) {
-			check(getTextInLine(Regs[REG_BZ]).trim());
+			check(getTextInLine(Regs[REG_BZ]));
 //			printValues();
 		}
 
@@ -457,6 +454,13 @@ public class Vam extends JFrame{
 
 	//separates the command and the rest
 	private void check(String input) {
+
+	    //remove comments
+	    try {
+	        input = input.substring(0, input.indexOf(" --"));
+	    }catch(Exception e) {}
+
+	    input = input.trim();
 
 		if (input.equals("END")) {
 			machine_END(-1);
@@ -479,8 +483,8 @@ public class Vam extends JFrame{
 			return;
 		}
 
-        String command = input.substring(0, space);
-        String arg = input.substring(space+1);
+        String command = input.substring(0, space).trim();
+        String arg = input.substring(space+1).trim();
 
         // Convert to int, or see if it is a labelled line number (starts with 'J')
         int value = -1;
