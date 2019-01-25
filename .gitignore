@@ -5,3 +5,4 @@
 bin/*
 VAM_program.txt
 *.class
+*.vam

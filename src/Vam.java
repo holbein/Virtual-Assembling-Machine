@@ -4,11 +4,7 @@ import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -82,7 +78,7 @@ public class Vam extends JFrame{
 	private JMenuItem save;
 	private JMenuItem open;
 
-	private String path = "";
+	private String path = ""; // Bsp.: D:\\Eigene Dateien\\Java Eclipse\\Virtual Assembling Machine\\ 
 
 	Vam(){
 		setSize(FRAME_WIDTH, FRAME_HEIGHT);
@@ -121,8 +117,14 @@ public class Vam extends JFrame{
 		setVisible(true);
 	}
 
-	public static void main(String args[]) {
+	public static void main(String args[]){
 		new Vam();
+		/*Vam vam = new Vam();
+		if(args.length > 0) {
+			File file = new File(args[0]); //File Association
+			vam.openFile(file);
+		}*/
+		
 	}
 
 	private void setMenu() {
@@ -168,11 +170,11 @@ public class Vam extends JFrame{
 	private void saveAs() {
 		JFileChooser choose = new JFileChooser();
 		choose.setFileSelectionMode(JFileChooser.FILES_ONLY);
-		choose.setFileFilter(new FileNameExtensionFilter(".txt", "txt"));
+		choose.setFileFilter(new FileNameExtensionFilter("VAM program", "vam"));
 		if(!path.equals("")) {
 			choose.setSelectedFile(new File(path));
 		}else {
-			choose.setSelectedFile(new File("MyVAMprogram.txt"));
+			choose.setSelectedFile(new File("MyProgram.vam"));
 		}
 
 		if(choose.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
@@ -205,30 +207,36 @@ public class Vam extends JFrame{
 	}
 
 	private void open() {
-		try {
-			JFileChooser choose = new JFileChooser();
-			choose.setFileSelectionMode(JFileChooser.FILES_ONLY);
-			choose.setFileFilter(new FileNameExtensionFilter(".txt", "txt"));
-			if(!path.equals("")) {
-				choose.setSelectedFile(new File(path));
-			}
+		JFileChooser choose = new JFileChooser();
+		choose.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		choose.setFileFilter(new FileNameExtensionFilter("VAM program", "vam"));
+		if(!path.equals("")) {
+			choose.setSelectedFile(new File(path));
+		}
 
-			if(choose.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-				File file = choose.getSelectedFile();
-				path = file.getAbsolutePath();
-				save.setEnabled(true);
-				BufferedReader br = new BufferedReader( new FileReader(file));
-				Object[] str = br.lines().toArray();
-				String whole = "";
-				for(int i = 0; i< str.length; i++) {
-					whole += str[i]+"\n";
-				}
-				br.close();
-				textArea.setText(whole);
-			}
-		}catch (IOException e) {
+		if(choose.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+			File file = choose.getSelectedFile();
+			openFile(file);
+		}
+	}
+	
+	public void openFile(File file){
+		path = file.getAbsolutePath();
+		save.setEnabled(true);
+		try {
+			BufferedReader br = new BufferedReader( new FileReader(file));
+			Object[] str = br.lines().toArray();
+			String whole = "";
+			for(int i = 0; i< str.length; i++) {
+				whole += str[i]+"\n";
+			}		
+			br.close();
+			textArea.setText(whole);	
+			
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
 	}
 
 	private void rightPanel() {
