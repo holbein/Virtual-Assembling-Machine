@@ -53,7 +53,7 @@ public class Vam extends JFrame{
 	//NB: fuer Regs[REG_SR] Aufbau: (0,0,0,0,0,Overflow,GreaterZero,SmallerZero)
 	private final byte[] Regs = new byte[19];
 
-	private HashMap<String ,Byte> assemblyLabels = new HashMap<String, Byte>();
+	private HashMap<String, Byte> assemblyLabels = new HashMap<String, Byte>();
 
 	private int numberOfLines = 1;
 
@@ -82,6 +82,7 @@ public class Vam extends JFrame{
 	private JMenuItem saveAs;
 	private JMenuItem save;
 	private JMenuItem open;
+    private JMenuItem quit;
 
 	private String path = ""; // Bsp.: D:\\Eigene Dateien\\Java Eclipse\\Virtual Assembling Machine\\
 
@@ -131,6 +132,7 @@ public class Vam extends JFrame{
 		saveAs = new JMenuItem("Save As...", new ImageIcon(Vam.class.getResource("resources/disk_....png")));
 		save = new JMenuItem("Save", new ImageIcon(Vam.class.getResource("resources/disk.png")));
 		open = new JMenuItem("Open File...", new ImageIcon(Vam.class.getResource("resources/folder_explore.png")));
+        quit = new JMenuItem("Quit", new ImageIcon(Vam.class.getResource("resources/cancel.png")));
 
 
 		saveAs.addActionListener(new ActionListener() {
@@ -154,12 +156,21 @@ public class Vam extends JFrame{
 			}
 		});
 
+        quit.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);
+            }
+        });
+
 		save.setAccelerator(KeyStroke.getKeyStroke('S', Toolkit.getDefaultToolkit ().getMenuShortcutKeyMask())); //shortcut ctrl+s
 		open.setAccelerator(KeyStroke.getKeyStroke('O', Toolkit.getDefaultToolkit ().getMenuShortcutKeyMask())); //shortcut ctrl+o
+		quit.setAccelerator(KeyStroke.getKeyStroke('Q', Toolkit.getDefaultToolkit ().getMenuShortcutKeyMask())); //shortcut ctrl+o
 
 		menu.add(save);
 		menu.add(saveAs);
 		menu.add(open);
+        menu.add(quit);
 
 		save.setEnabled(false);
 
@@ -414,14 +425,7 @@ public class Vam extends JFrame{
 
 	private void oneStep() {
 //		System.out.println("| SR| BZ|  A| R0| R1| R2| R3| R4| R5| R6| R7| R8| R9|R10|R11|R12|R13|R14|R15");
-		assemblyLabels.clear();
-		for(int i=1; i<=textArea.getLineCount(); i++) {
-			if(getTextInLine(i).trim().contains(":")) {
-				if(!assemblyLabels.containsValue(i)) {
-					addAssemblyLabel(getTextInLine(i).trim().substring(0, getTextInLine(i).trim().indexOf(':')).trim(),i);
-				}
-			}
-		}
+        scanForLabels();
 
 		if(processing && 0 < Regs[REG_BZ] && Regs[REG_BZ] <= textArea.getLineCount()){
 			check(getTextInLine(Regs[REG_BZ]));
@@ -434,14 +438,7 @@ public class Vam extends JFrame{
 
 	private void start() {
 //		System.out.println("| SR| BZ|  A| R0| R1| R2| R3| R4| R5| R6| R7| R8| R9|R10|R11|R12|R13|R14|R15");
-		assemblyLabels.clear();
-		for(int i=1; i<=textArea.getLineCount(); i++) {
-			if(getTextInLine(i).trim().contains(":")) {
-				if(!assemblyLabels.containsValue(i)) {
-					addAssemblyLabel(getTextInLine(i).trim().substring(0, getTextInLine(i).trim().indexOf(':')).trim(), i);
-				}
-			}
-		}
+		scanForLabels();
 
 		while(processing && 0 < Regs[REG_BZ] && Regs[REG_BZ] <= textArea.getLineCount()) {
 			check(getTextInLine(Regs[REG_BZ]));
@@ -452,20 +449,24 @@ public class Vam extends JFrame{
 		reDrawLeftPanel();
 	}
 
-	//separates the command and the rest
-	private void check(String input) {
+    /**
+	 * " JUMP  4   --jumps back to line 4" --> "JUMP  4"
+	 * @param input full {@link java.lang.String String} of the line
+	 * @return String with the comment removed that is then trimmed
+	 */
+    private String getLineNoComment(String input) {
+        // Strip out (trailing) comments of the form " --..."
+        return input.replaceFirst("\\s--.*$", "").trim();
+    }
 
-	    //remove comments
-	    try {
-	        input = input.substring(0, input.indexOf(" --"));
-	    }catch(Exception e) {}
+    //separates the command and the rest
+    private void check(String input) {
+        input = getLineNoComment(input);
 
-	    input = input.trim();
-
-		if (input.equals("END")) {
-			machine_END(-1);
-			return;
-		}
+        if (input.equals("END")) {
+            machine_END(-1);
+            return;
+        }
 
 		int space = input.indexOf(' ');
 		if (space == -1) {
@@ -527,8 +528,7 @@ public class Vam extends JFrame{
 
         errorLineList.add((int)Regs[REG_BZ]);
 
-        System.err.println(caller+" "+lineNo);
-		System.err.println(text);
+        System.err.println(text);
 		JLabel lError = new JLabel(text);
 		lError.setForeground(Color.RED);
 
@@ -563,8 +563,7 @@ public class Vam extends JFrame{
         errorLineList.add(line1);
         errorLineList.add(line2);
 
-        System.err.println(caller+" "+lineNo);
-		System.err.println(text);
+        System.err.println(text);
 		JLabel lError = new JLabel(text);
 		lError.setForeground(Color.RED);
 
@@ -590,29 +589,44 @@ public class Vam extends JFrame{
 		Regs[REG_BZ]++;
 	}
 
-	private void addAssemblyLabel(String assemblyLabel, int line) {
-		try {//checks if the label could be mixed up with an integer value
-			Integer.parseInt(assemblyLabel);
-			labelError("Label: \""+assemblyLabel+":\" in line: "+line+" can be confused with a value.", line, line);
-		} catch(NumberFormatException e) {
-			if(assemblyLabel.length() != 0) {
-				if(assemblyLabels.containsKey(assemblyLabel)) {
-					labelError("Label: \""+assemblyLabel+":\", used in lines "+assemblyLabels.get(assemblyLabel)+" and "+line+", is only allowed to be used once!", assemblyLabels.get(assemblyLabel), line);
-				} else {
-					assemblyLabels.put(assemblyLabel, (byte)line);
-					//System.out.println(assemblyLabels.toString());
-				}
-			} else {
-				labelError("Label: \""+assemblyLabel+":\" in line: "+line+" is not allowed.", line, line);
-			}
-		}
-	}
 
-	private int getAssemblyLabelLine(String assemblyLabel) {
-		if(assemblyLabels.containsKey(assemblyLabel.trim())) {
-			return assemblyLabels.get(assemblyLabel.trim());
-		}
-		return -1;
+    private void scanForLabels() {
+        assemblyLabels.clear();
+
+        for(int lineNo=1; lineNo<=textArea.getLineCount(); ++lineNo) {
+            String tag = getLineNoComment(getTextInLine(lineNo));
+            int colon = tag.indexOf(':');
+            if (colon == -1) continue;
+
+            tag = tag.substring(0, colon).trim();
+
+            if (tag.matches("^\\d+$")) {
+                labelError("Label: \""+tag+":\" in line: "+lineNo+" can be confused with a value.", lineNo, lineNo);
+                continue;
+            }
+
+            if (tag.length() != 0) {
+                int val = getAssemblyLabelLine(tag);
+                if (val == -1) {
+                    // Not previously there
+                    assemblyLabels.put(tag, (byte)lineNo);
+                    //System.out.println(assemblyLabels.toString());
+                } else {
+                    labelError("Label: \""+tag+":\", used in lines "+ val+" and "+lineNo+", is only allowed to be used once!", val, lineNo);
+                }
+            } else {
+                labelError("Empty label not allowed in line: "+lineNo, lineNo, lineNo);
+            }
+        }
+    }
+
+    /**
+     *
+     * @param tag lookup for possible label. Shall not contain leading/trailing space (ie, trimmed)
+     * @return The corresponding line number or -1 if not found.
+     */
+	private int getAssemblyLabelLine(String tag) {
+	    return (assemblyLabels.containsKey(tag) ? assemblyLabels.get(tag) : -1);
 	}
 
 	public void machine_END(int unused) {
