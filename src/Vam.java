@@ -15,6 +15,7 @@ import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -24,6 +25,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
@@ -78,11 +80,15 @@ public class Vam extends JFrame{
 	private JScrollPane errorScroll = new JScrollPane(errorPanel);
 
 	private JMenuBar bar;
-	private JMenu menu;
+	private JMenu file;
 	private JMenuItem saveAs;
 	private JMenuItem save;
 	private JMenuItem open;
     private JMenuItem quit;
+    private JMenu edit;
+    private JRadioButton bit_8;
+    private JRadioButton bit_16;
+    private ButtonGroup buttonGroup;
 
 	private String path = ""; // Bsp.: D:\\Eigene Dateien\\Java Eclipse\\Virtual Assembling Machine\\
 
@@ -128,12 +134,15 @@ public class Vam extends JFrame{
 
 	private void setMenu() {
 		bar = new JMenuBar();
-		menu = new JMenu("File");
+		file = new JMenu("File");
 		saveAs = new JMenuItem("Save As...", new ImageIcon(Vam.class.getResource("resources/disk_....png")));
 		save = new JMenuItem("Save", new ImageIcon(Vam.class.getResource("resources/disk.png")));
 		open = new JMenuItem("Open File...", new ImageIcon(Vam.class.getResource("resources/folder_explore.png")));
         quit = new JMenuItem("Quit", new ImageIcon(Vam.class.getResource("resources/cancel.png")));
-
+        edit = new JMenu("Edit");
+        bit_8 = new JRadioButton("Use 8 Bits");
+        bit_16 = new JRadioButton("Use 16 Bits");
+        buttonGroup = new ButtonGroup();
 
 		saveAs.addActionListener(new ActionListener() {
 			@Override
@@ -163,18 +172,42 @@ public class Vam extends JFrame{
             }
         });
 
+        bit_8.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
+
+        bit_16.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
+
 		save.setAccelerator(KeyStroke.getKeyStroke('S', Toolkit.getDefaultToolkit ().getMenuShortcutKeyMask())); //shortcut ctrl+s
 		open.setAccelerator(KeyStroke.getKeyStroke('O', Toolkit.getDefaultToolkit ().getMenuShortcutKeyMask())); //shortcut ctrl+o
 		quit.setAccelerator(KeyStroke.getKeyStroke('Q', Toolkit.getDefaultToolkit ().getMenuShortcutKeyMask())); //shortcut ctrl+o
 
-		menu.add(save);
-		menu.add(saveAs);
-		menu.add(open);
-        menu.add(quit);
+		file.add(save);
+		file.add(saveAs);
+		file.add(open);
+        file.add(quit);
 
 		save.setEnabled(false);
 
-		bar.add(menu);
+		bar.add(file);
+
+		edit.add(bit_8);
+        edit.add(bit_16);
+
+        bar.add(edit);
+
+        buttonGroup.add(bit_8);
+        buttonGroup.add(bit_16);
+
+        bit_8.setSelected(true);
 
 		setJMenuBar(bar);
 	}
