@@ -621,7 +621,6 @@ public class Vam extends JFrame{
     }
 
     /**
-     *
      * @param tag lookup for possible label. Shall not contain leading/trailing space (ie, trimmed)
      * @return The corresponding line number or -1 if not found.
      */
