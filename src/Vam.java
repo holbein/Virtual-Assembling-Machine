@@ -1,5 +1,7 @@
 
 import java.awt.Color;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -56,15 +58,17 @@ public class Vam extends JFrame{
 	private final int[] Regs = new int[19];
 	private int numOfBytes = 1; //only use values 1, 2, or 4
 
+	List <Image> holbeinLogos = new ArrayList<Image>();
+
 	private HashMap<String, Integer> assemblyLabels = new HashMap<String, Integer>();
 
-	private int numberOfLines = 1;
+	private int numberOfLines = 1; //do not change this value here
 
-	private JPanel panelLeft = new JPanel();
-	private JScrollPane scrollPane = new JScrollPane(panelLeft);
+	private JPanel panelLeft;
+	private JScrollPane scrollPane;
 	private JPanel lineNumbering = new JPanel();
-	private static ImageIcon ARROW_EMPTY = new ImageIcon(Vam.class.getResource("resources/arrow_empty_16x12.png"));
-	private static ImageIcon ARROW_GREEN = new ImageIcon(Vam.class.getResource("resources/arrow_green_16x12.png"));
+	private static ImageIcon EMPTY = new ImageIcon(Vam.class.getResource("resources/empty_16x12.png"));
+	private static ImageIcon ARROW = new ImageIcon(Vam.class.getResource("resources/arrow_16x12.png"));
 	private static ImageIcon ERROR = new ImageIcon(Vam.class.getResource("resources/error_16x15.png"));
 	private static ImageIcon ARROW_ERROR = new ImageIcon(Vam.class.getResource("resources/arrow_error_16x15.png"));
 	private JTextArea textArea = new JTextArea(numberOfLines, 30);
@@ -100,24 +104,17 @@ public class Vam extends JFrame{
 		setTitle("Virtual Assembling Machine v." + version);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-		List <Image> imgs = new ArrayList<Image>();
-		imgs.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_128x128.png")).getImage());
-		imgs.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_64x64.png")).getImage());
-		imgs.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_32x32.png")).getImage());
-		imgs.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_16x16.png")).getImage());
-		imgs.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_8x8.png")).getImage());
-		setIconImages(imgs);
-
-		textArea.getDocument().addDocumentListener(new MyDocumentListener());
-		scrollPane.getVerticalScrollBar().setUnitIncrement(10); //sets the scroll-speed
-
-		reDrawLeftPanel();
-
-		panelLeft.add(lineNumbering);
-		panelLeft.add(textArea);
+		holbeinLogos.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_128x128.png")).getImage());
+		holbeinLogos.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_64x64.png")).getImage());
+		holbeinLogos.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_32x32.png")).getImage());
+		holbeinLogos.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_16x16.png")).getImage());
+		holbeinLogos.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_8x8.png")).getImage());
+		setIconImages(holbeinLogos);
 
 		reset();
+
 		setMenu();
+
 		add(scrollPane);
 		add(panelRight);
 		setVisible(true);
@@ -136,7 +133,7 @@ public class Vam extends JFrame{
 	private void setMenu() {
 		bar = new JMenuBar();
 		file = new JMenu("File");
-		saveAs = new JMenuItem("Save As...", new ImageIcon(Vam.class.getResource("resources/disk_....png")));
+		saveAs = new JMenuItem("Save As...", new ImageIcon(Vam.class.getResource("resources/disk_2.png")));
 		save = new JMenuItem("Save", new ImageIcon(Vam.class.getResource("resources/disk.png")));
 		open = new JMenuItem("Open File...", new ImageIcon(Vam.class.getResource("resources/folder_explore.png")));
         quit = new JMenuItem("Quit", new ImageIcon(Vam.class.getResource("resources/cancel.png")));
@@ -335,14 +332,14 @@ public class Vam extends JFrame{
                         break;
 	            }
 	        }
-
 	        reDrawRightPanel();
 	    }
 	}
 
 	private void rightPanel() {
 		panelRight = new JPanel();
-		panelRight.setLayout(new GridLayout(20, 3));
+		panelRight.setLayout(new GridBagLayout());
+		GridBagConstraints c = new GridBagConstraints();
 
 		labels[0][REG_SR] = new JLabel("SR", SwingConstants.CENTER);
 		labels[0][REG_BZ] = new JLabel("BZ", SwingConstants.CENTER);
@@ -361,10 +358,18 @@ public class Vam extends JFrame{
 			labels[2][i].setBorder(BorderFactory.createLineBorder(Color.BLACK));
 		}
 
-		for(int i=0; i < Regs.length; i++) {
-			panelRight.add(labels[0][i]);
-			panelRight.add(labels[1][i]);
-			panelRight.add(labels[2][i]);
+		c.fill = GridBagConstraints.BOTH;
+		c.weighty = 1;
+        for(int i=0; i < Regs.length; i++) {
+            c.gridx = 0;
+		    c.gridy = i;
+			panelRight.add(labels[0][i], c);
+			c.weightx = 2;
+            c.gridx = 1;
+            panelRight.add(labels[1][i], c);
+            c.weightx = 1;
+            c.gridx = 2;
+            panelRight.add(labels[2][i], c);
 		}
 
 		start = new JButton(new AbstractAction("Start") {
@@ -385,9 +390,13 @@ public class Vam extends JFrame{
             }
 		});
 
-		panelRight.add(start);
-		panelRight.add(oneStep);
-		panelRight.add(reset);
+		c.gridy = Regs.length;
+		c.gridx = 0;
+        panelRight.add(start, c);
+        c.gridx = 1;
+        panelRight.add(oneStep, c);
+        c.gridx = 2;
+        panelRight.add(reset, c);
 	}
 
 	//call this method, to update the values
@@ -398,34 +407,41 @@ public class Vam extends JFrame{
 		}
 	}
 
+	private void leftPanel() {
+	    panelLeft = new JPanel();
+        scrollPane = new JScrollPane(panelLeft);
+
+        textArea.getDocument().addDocumentListener(new MyDocumentListener());
+        scrollPane.getVerticalScrollBar().setUnitIncrement(10); //sets the scroll-speed
+
+        lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 3));
+        lineNumbering.add(new JLabel(EMPTY));
+        lineNumbering.add(new JLabel(String.valueOf(numberOfLines)+"  "));
+        lineNumbering.add(new JLabel(":"));
+
+        panelLeft.add(lineNumbering);
+        panelLeft.add(textArea);
+	}
+
+
 	//call this method, to update the values
-	private void reDrawLeftPanel() {
-		lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 3));
-		while(lineNumbering.getComponentCount() != 0) {
-			lineNumbering.remove(0);
-		}
+	private void reDrawLeftIcons() {
+	    lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 3));
 
 		for(int lineNo=1; lineNo <= numberOfLines; ++lineNo) {
 			if (errorLineList.contains(lineNo)){
-				if (Regs[REG_BZ] == lineNo) {
-					lineNumbering.add(new JLabel(ARROW_ERROR));
+			    if (Regs[REG_BZ] == lineNo) {
+                    ((JLabel)lineNumbering.getComponent(3*(lineNo-1))).setIcon(ARROW_ERROR);
 				} else {
-					lineNumbering.add(new JLabel(ERROR));
+				    ((JLabel)lineNumbering.getComponent(3*(lineNo-1))).setIcon(ERROR);
 				}
 			}else {
 				if (Regs[REG_BZ] == lineNo) {
-					lineNumbering.add(new JLabel(ARROW_GREEN));
+				    ((JLabel)lineNumbering.getComponent(3*(lineNo-1))).setIcon(ARROW);
 				} else {
-					lineNumbering.add(new JLabel(ARROW_EMPTY));
+				    ((JLabel)lineNumbering.getComponent(3*(lineNo-1))).setIcon(EMPTY);
 				}
 			}
-
-			if(numberOfLines<10) {
-				lineNumbering.add(new JLabel(String.valueOf(lineNo)+"   "));
-			} else {
-				lineNumbering.add(new JLabel(String.valueOf(lineNo)));
-			}
-			lineNumbering.add(new JLabel(":"));
 		}
 	}
 
@@ -439,15 +455,15 @@ public class Vam extends JFrame{
 
 				if (errorLineList.contains(numberOfLines)){
 					if (Regs[REG_BZ] == numberOfLines+1) {
-						lineNumbering.add(new JLabel(ARROW_ERROR));
+	                    lineNumbering.add(new JLabel(ARROW_ERROR));
 					} else {
-						lineNumbering.add(new JLabel(ERROR));
+	                    lineNumbering.add(new JLabel(ERROR));
 					}
 				}else {
 					if (Regs[REG_BZ] == numberOfLines+1) {
-						lineNumbering.add(new JLabel(ARROW_GREEN));
+	                    lineNumbering.add(new JLabel(ARROW));
 					} else {
-						lineNumbering.add(new JLabel(ARROW_EMPTY));
+	                    lineNumbering.add(new JLabel(EMPTY));
 					}
 				}
 
@@ -475,7 +491,6 @@ public class Vam extends JFrame{
 	// line is the same number as the numbering of the lines on the left side
     // find the corresponding text line from textArea
 	private String getTextInLine(int line) {
-
 		String text = textArea.getText();
 
 		// init with -1 for error detection and to increment in first iteration
@@ -507,9 +522,10 @@ public class Vam extends JFrame{
 		processing = true;
 
 		if (panelRight == null) rightPanel();
+		if (panelLeft == null) leftPanel();
 
 		reDrawRightPanel();
-		reDrawLeftPanel();
+		reDrawLeftIcons();
 	}
 
 	private void oneStep() {
@@ -522,7 +538,7 @@ public class Vam extends JFrame{
 		}
 
 		reDrawRightPanel();
-		reDrawLeftPanel();
+		reDrawLeftIcons();
 	}
 
 	private void start() {
@@ -535,8 +551,19 @@ public class Vam extends JFrame{
 		}
 
 		reDrawRightPanel();
-		reDrawLeftPanel();
+		reDrawLeftIcons();
 	}
+
+    private void printValues() {
+        for (int i=0; i<Regs.length; i++) {
+            System.out.print("+---");
+        }
+        System.out.println();
+        for (int i=0; i<Regs.length; i++) {
+            System.out.print("|" + String.format("%3s", Regs[i]));
+        }
+        System.out.println();
+    }
 
     /**
 	 * " JUMP  4   --jumps back to line 4" --> "JUMP  4"
@@ -599,17 +626,6 @@ public class Vam extends JFrame{
 		}
 	}
 
-	private void printValues() {
-	    for (int i=0; i<Regs.length; i++) {
-            System.out.print("+---");
-        }
-	    System.out.println();
-	    for (int i=0; i<Regs.length; i++) {
-			System.out.print("|" + String.format("%3s", Regs[i]));
-		}
-		System.out.println();
-	}
-
 	private void def(String input) {
         error("Unknown command: \""+ input + "\" in line: "+Regs[REG_BZ]+"!");
 	}
@@ -629,13 +645,7 @@ public class Vam extends JFrame{
 			errorFrame = new JFrame("Error");
 			errorFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 	        errorFrame.setSize(400, 150);
-			List <Image> imgs = new ArrayList<Image>();
-			imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_128x128.png")).getImage());
-			imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_64x64.png")).getImage());
-			imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_32x32.png")).getImage());
-			imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_16x16.png")).getImage());
-			imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_8x8.png")).getImage());
-			errorFrame.setIconImages(imgs);
+			errorFrame.setIconImages(holbeinLogos);
 
 	        errorPanel.setLayout(new BoxLayout(errorPanel, BoxLayout.PAGE_AXIS));
 		}
@@ -645,7 +655,8 @@ public class Vam extends JFrame{
 		errorFrame.setVisible(true);
 
 		processing = false;
-		Regs[REG_BZ]++;
+		System.out.println(Regs[REG_BZ]);
+		//Regs[REG_BZ]++;
 	}
 
 	@SuppressWarnings("unused")
@@ -664,13 +675,7 @@ public class Vam extends JFrame{
 			errorFrame = new JFrame("Error");
 			errorFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 	        errorFrame.setSize(400, 150);
-			List <Image> imgs = new ArrayList<Image>();
-			imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_128x128.png")).getImage());
-			imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_64x64.png")).getImage());
-			imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_32x32.png")).getImage());
-			imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_16x16.png")).getImage());
-			imgs.add(new ImageIcon(getClass().getResource("resources/Holbein_Logo_8x8.png")).getImage());
-			errorFrame.setIconImages(imgs);
+			errorFrame.setIconImages(holbeinLogos);
 
 	        errorPanel.setLayout(new BoxLayout(errorPanel, BoxLayout.PAGE_AXIS));
 		}
@@ -679,7 +684,7 @@ public class Vam extends JFrame{
 		errorPanel.add(lError);
 		errorFrame.add(errorScroll);
 		errorFrame.setVisible(true);
-		Regs[REG_BZ]++;
+		//Regs[REG_BZ]++;
 	}
 
 
