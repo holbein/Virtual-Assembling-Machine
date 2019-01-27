@@ -53,14 +53,14 @@ public class Vam extends JFrame{
 	private static final int NREGS = 16;
 
 	//NB: fuer Regs[REG_SR] Aufbau: (0,0,0,0,0,Overflow,GreaterZero,SmallerZero)
-	private final byte[] Regs = new byte[19];
+	private final int[] Regs = new int[19];
+	private int numOfBytes = 1; //only use values 1, 2, or 4
 
-	private HashMap<String, Byte> assemblyLabels = new HashMap<String, Byte>();
+	private HashMap<String, Integer> assemblyLabels = new HashMap<String, Integer>();
 
 	private int numberOfLines = 1;
 
 	private JPanel panelLeft = new JPanel();
-
 	private JScrollPane scrollPane = new JScrollPane(panelLeft);
 	private JPanel lineNumbering = new JPanel();
 	private static ImageIcon ARROW_EMPTY = new ImageIcon(Vam.class.getResource("resources/arrow_empty_16x12.png"));
@@ -88,6 +88,7 @@ public class Vam extends JFrame{
     private JMenu edit;
     private JRadioButton bit_8;
     private JRadioButton bit_16;
+    private JRadioButton bit_32;
     private ButtonGroup buttonGroup;
 
 	private String path = ""; // Bsp.: D:\\Eigene Dateien\\Java Eclipse\\Virtual Assembling Machine\\
@@ -142,6 +143,7 @@ public class Vam extends JFrame{
         edit = new JMenu("Edit");
         bit_8 = new JRadioButton("Use 8 Bits");
         bit_16 = new JRadioButton("Use 16 Bits");
+        bit_32 = new JRadioButton("Use 32 Bits");
         buttonGroup = new ButtonGroup();
 
 		saveAs.addActionListener(new ActionListener() {
@@ -175,14 +177,21 @@ public class Vam extends JFrame{
         bit_8.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-
+                setNumberOfBytes(1);
             }
         });
 
         bit_16.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                setNumberOfBytes(2);
+            }
+        });
 
+        bit_32.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setNumberOfBytes(4);
             }
         });
 
@@ -201,11 +210,13 @@ public class Vam extends JFrame{
 
 		edit.add(bit_8);
         edit.add(bit_16);
+        edit.add(bit_32);
 
         bar.add(edit);
 
         buttonGroup.add(bit_8);
         buttonGroup.add(bit_16);
+        buttonGroup.add(bit_32);
 
         bit_8.setSelected(true);
 
@@ -284,6 +295,51 @@ public class Vam extends JFrame{
 
 	}
 
+	private void setNumberOfBytes(int numOfBytes) {
+	    if(numOfBytes==1 || numOfBytes==2 || numOfBytes==4) {
+	        this.numOfBytes = numOfBytes;
+	        safeNumberCast(Regs[REG_A]);
+
+	        switch(numOfBytes) {
+	            case 1:
+	                if(Regs[REG_BZ] > Byte.MAX_VALUE) {
+	                    Regs[REG_BZ] = (byte) Regs[REG_BZ];
+	                    error("Overflow in BZ!");
+	                }
+	                break;
+	            case 2:
+	                if(Regs[REG_BZ] > Short.MAX_VALUE) {
+                        Regs[REG_BZ] = (short) Regs[REG_BZ];
+                        error("Overflow in BZ!");
+                    }
+	                break;
+	            case 4:
+	                break;
+	        }
+
+	        for(int i=REG_OFFSET; i<Regs.length; i++) {
+	            switch(numOfBytes) {
+                    case 1:
+                        if (Regs[i] < Byte.MIN_VALUE || Byte.MAX_VALUE < Regs[i]) {
+                            Regs[i] = (byte) Regs[i];
+                            error("Overflow in R"+(i-REG_OFFSET));
+                        }
+                        break;
+                    case 2:
+                        if (Regs[i] < Short.MIN_VALUE || Short.MAX_VALUE < Regs[i]) {
+                            Regs[i] = (short) Regs[i];
+                            error("Overflow in R"+(i-REG_OFFSET));
+                        }
+                        break;
+                    case 4:
+                        break;
+	            }
+	        }
+
+	        reDrawRightPanel();
+	    }
+	}
+
 	private void rightPanel() {
 		panelRight = new JPanel();
 		panelRight.setLayout(new GridLayout(20, 3));
@@ -297,7 +353,7 @@ public class Vam extends JFrame{
 		}
 
 		for(int i=0; i < Regs.length; i++) {
-			labels[1][i] = new JLabel("00000000", SwingConstants.CENTER);
+			labels[1][i] = new JLabel(String.format("%0"+(numOfBytes*8)+"d", 0), SwingConstants.CENTER);
 			labels[2][i] = new JLabel("0", SwingConstants.CENTER);
 
 			labels[0][i].setBorder(BorderFactory.createLineBorder(Color.BLACK));
@@ -337,8 +393,8 @@ public class Vam extends JFrame{
 	//call this method, to update the values
 	private void reDrawRightPanel() {
 		for(int i=0; i<Regs.length; i++) {
-			labels[1][i].setText(String.format("%8s", Integer.toBinaryString(Regs[i] & 0xFF)).replace(' ', '0'));
-			labels[2][i].setText(Byte.toString(Regs[i]));
+			labels[1][i].setText(String.format("%"+(numOfBytes*8)+"s", Integer.toBinaryString(Regs[i] & 0xFF)).replace(' ', '0'));
+			labels[2][i].setText(Integer.toString(Regs[i]));
 		}
 	}
 
@@ -520,7 +576,7 @@ public class Vam extends JFrame{
         String command = input.substring(0, space).trim();
         String arg = input.substring(space+1).trim();
 
-        // Convert to int, or see if it is a labelled line number (starts with 'J')
+        // Convert to int, or see if it is a labeled line number (starts with 'J')
         int value = -1;
         try {
             value = Integer.parseInt(arg);
@@ -544,8 +600,12 @@ public class Vam extends JFrame{
 	}
 
 	private void printValues() {
-		for (int i=0; i<Regs.length; i++) {
-			System.out.print("|"+String.format("%3s", Regs[i]));
+	    for (int i=0; i<Regs.length; i++) {
+            System.out.print("+---");
+        }
+	    System.out.println();
+	    for (int i=0; i<Regs.length; i++) {
+			System.out.print("|" + String.format("%3s", Regs[i]));
 		}
 		System.out.println();
 	}
@@ -559,7 +619,7 @@ public class Vam extends JFrame{
         String caller = Thread.currentThread().getStackTrace()[2].getMethodName(); //for debug purposes: shows in which method def(String) was called
         int lineNo = Thread.currentThread().getStackTrace()[2].getLineNumber(); //for debug purposes: show in which line def(String) was called
 
-        errorLineList.add((int)Regs[REG_BZ]);
+        errorLineList.add(Regs[REG_BZ]);
 
         System.err.println(text);
 		JLabel lError = new JLabel(text);
@@ -642,7 +702,7 @@ public class Vam extends JFrame{
                 int val = getAssemblyLabelLine(tag);
                 if (val == -1) {
                     // Not previously there
-                    assemblyLabels.put(tag, (byte)lineNo);
+                    assemblyLabels.put(tag, lineNo);
                     //System.out.println(assemblyLabels.toString());
                 } else {
                     labelError("Label: \""+tag+":\", used in lines "+ val+" and "+lineNo+", is only allowed to be used once!", val, lineNo);
@@ -667,46 +727,62 @@ public class Vam extends JFrame{
 	}
 
 	private void setSignStatus(int value){
-		Regs[REG_SR] = (byte) (Regs[REG_SR] & Byte.valueOf("-1111100",2)); //clear last 2 bits
+		Regs[REG_SR] = 0; //clear all bits
 		if (value > 0) {
-			Regs[REG_SR] = (byte) (Regs[REG_SR] | Byte.valueOf("00000010",2)); //set bit before last to 1
+			Regs[REG_SR] = (Regs[REG_SR] | 2); //set second last bit to 1
 		}else if (value < 0) {
-			Regs[REG_SR] = (byte) (Regs[REG_SR] | Byte.valueOf("00000001",2));//set last bit to 1
+			Regs[REG_SR] = (Regs[REG_SR] | 1);//set last bit to 1
 		}
 	}
 
-	private byte safeByteCast(int value){
+	private void safeNumberCast(int value){
 		setSignStatus(value);
 
-		if (Byte.MIN_VALUE <= value && value <= Byte.MAX_VALUE) {
-			Regs[REG_SR] = (byte) (Regs[REG_SR] & Byte.valueOf("-1111011",2));//set 6. bit to 0
-			return (byte)value;
-		}else {
-			Regs[REG_SR] = (byte) (Regs[REG_SR] | Byte.valueOf("00000100",2));//set 6. bit to 1
+		Regs[REG_SR] %= 4; //set third last bit to 0
+        Regs[REG_A] = value;
 
-			return (byte)(value & Integer.valueOf("11111111",2));
+		switch(numOfBytes) {
+		    case 1:
+		        if (value < Byte.MIN_VALUE || Byte.MAX_VALUE < value) {
+                    Regs[REG_SR] += 4; //set third last bit to 1
+                    Regs[REG_A] = (byte) value;
+                }
+                break;
+            case 2:
+                if (value < Short.MIN_VALUE || Short.MAX_VALUE < value) {
+                    Regs[REG_SR] += 4; //set third last bit to 1
+                    Regs[REG_A] = (short) value;
+                }
+                break;
+            case 4:
+                if (value < Integer.MIN_VALUE || Integer.MAX_VALUE < value) {
+                    Regs[REG_SR] += 4; //set third last bit to 1
+                }
+                break;
 		}
 	}
 
 	public void machine_ADD(int number) {
 		processing = (number >= 0 && number < NREGS);
 		if (!processing){
-			error(number+" in line:"+Regs[REG_BZ]+" is not a valid register!");
+			error(number+" in line: "+Regs[REG_BZ]+" is not a valid register!");
 			return;
 		}
 
 		int temp = Regs[REG_A] + Regs[number + REG_OFFSET];
 
-		Regs[REG_A] = safeByteCast(temp);
+		safeNumberCast(temp);
 		Regs[REG_BZ]++;
 
 	}
 
 	public void machine_DLOAD(int number) {
-		if(number<128&&number>-129) {
-			Regs[REG_A] = (byte)number;
+	    if(number < Math.pow(2, 8*numOfBytes-1) && number >= -(Math.pow(2, 8*numOfBytes-1))) {
+		    setSignStatus(number);
+			Regs[REG_A] = number;
 		}else {
-			error(number+" in line:"+Regs[REG_BZ]+" is a too big number");
+			error(number+" in line: "+Regs[REG_BZ]+" is a too big number");
+			return;
 		}
 		Regs[REG_BZ]++;
 	}
@@ -714,7 +790,7 @@ public class Vam extends JFrame{
 	public void machine_DIV(int number) {
 		processing = (number >= 0 && number < NREGS);
 		if (!processing){
-			error(number+" in line:"+Regs[REG_BZ]+" is not a valid register!");
+			error(number+" in line: "+Regs[REG_BZ]+" is not a valid register!");
 			return;
 		}
 
@@ -722,11 +798,11 @@ public class Vam extends JFrame{
 		try {
 			temp = Regs[REG_A] / Regs[number+REG_OFFSET];
 		}catch(Exception e) {
-			error("Division by zero in line"+Regs[REG_BZ]+" is not allowed");
+			error("Division by zero in line: "+Regs[REG_BZ]+" is not allowed");
 			return;
 		}
 
-		Regs[REG_A] = safeByteCast(temp);
+		safeNumberCast(temp);
 		Regs[REG_BZ]++;
 	}
 
@@ -785,13 +861,13 @@ public class Vam extends JFrame{
 	}
 
 	public void machine_JUMP(int number) {
-		Regs[REG_BZ] = (byte)number;
+		Regs[REG_BZ] = number;
 	}
 
 	public void machine_LOAD(int number) {
 		processing = (number >= 0 && number < NREGS);
 		if (!processing) {
-			error(number+" in line:"+Regs[REG_BZ]+" is not a valid register!");
+			error(number+" in line: "+Regs[REG_BZ]+" is not a valid register!");
 			return;
 		}
 
@@ -805,7 +881,7 @@ public class Vam extends JFrame{
 	public void machine_MULT(int number) {
 		processing = (number >= 0 && number < NREGS);
 		if (!processing) {
-			error(number+" in line:"+Regs[REG_BZ]+" is not a valid register!");
+			error(number+" in line: "+Regs[REG_BZ]+" is not a valid register!");
 			return;
 		}
 
@@ -817,7 +893,7 @@ public class Vam extends JFrame{
 			return;
 		}
 
-		Regs[REG_A] = safeByteCast(temp);
+		safeNumberCast(temp);
 		Regs[REG_BZ]++;
 	}
 
@@ -825,7 +901,7 @@ public class Vam extends JFrame{
 		try {
 			Regs[number+REG_OFFSET] = Regs[REG_A];
 		}catch(Exception e) {
-			error(number+" in line:"+Regs[REG_BZ]+" is not a valid register!");
+			error(number+" in line: "+Regs[REG_BZ]+" is not a valid register!");
 			return;
 		}
 		Regs[REG_BZ]++;
@@ -836,11 +912,11 @@ public class Vam extends JFrame{
 		try {
 			temp = Regs[REG_A] - Regs[number+REG_OFFSET];
 		}catch(Exception e) {
-			error(number+" in line:"+Regs[REG_BZ]+" is not a valid register!");
+			error(number+" in line: "+Regs[REG_BZ]+" is not a valid register!");
 			return;
 		}
 
-		Regs[REG_A] = safeByteCast(temp);
+		safeNumberCast(temp);
 		Regs[REG_BZ]++;
 	}
 }
