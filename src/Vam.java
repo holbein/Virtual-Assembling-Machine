@@ -7,6 +7,8 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputMethodEvent;
+import java.awt.event.InputMethodListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
@@ -53,6 +55,7 @@ public class Vam extends JFrame{
 	private HashSet<Integer> errorLineList = new HashSet<Integer>(); //List of lines with errors
 
 	private boolean processing = true;
+	private boolean textChanged;
 
 	private static final int REG_SR = 17;
 	private static final int REG_BZ = 16;
@@ -127,6 +130,21 @@ public class Vam extends JFrame{
 		add(scrollPane);
 		add(panelRight);
 		setVisible(true);
+		
+		textArea.addInputMethodListener(new InputMethodListener() {
+			
+			@Override
+			public void inputMethodTextChanged(InputMethodEvent event) {
+				textChanged = true;
+				
+			}
+			
+			@Override
+			public void caretPositionChanged(InputMethodEvent event) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
 	}
 
 	public static void main(String args[]){
@@ -247,6 +265,7 @@ public class Vam extends JFrame{
 				PrintWriter writer = new PrintWriter(out);
 				writer.print(textArea.getText());
 				writer.close();
+				textChanged = false;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -260,6 +279,7 @@ public class Vam extends JFrame{
 				PrintWriter writer = new PrintWriter(out);
 				writer.print(textArea.getText());
 				writer.close();
+				textChanged = false;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -294,7 +314,7 @@ public class Vam extends JFrame{
 			}
 			br.close();
 			textArea.setText(whole);
-
+			textChanged = false;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -499,6 +519,7 @@ public class Vam extends JFrame{
 				}
 				lineNumbering.add(new JLabel(":"));
 			}
+			textChanged = true;
         }
 
 		public void removeUpdate(DocumentEvent e) {
@@ -509,9 +530,13 @@ public class Vam extends JFrame{
 				lineNumbering.remove(lineNumbering.getComponentCount()-1);
 				numberOfLines--;
 			}
+			textChanged = true;
         }
-		public void changedUpdate(DocumentEvent e) { /* unneeded */ }
-    }
+		
+		public void changedUpdate(DocumentEvent e) { 
+			textChanged = true;
+		}
+	}
 
 	// line is the same number as the numbering of the lines on the left side
     // find the corresponding text line from textArea
@@ -710,44 +735,48 @@ public class Vam extends JFrame{
 	}
 	
 	public void askSave() {
-		JDialog saveDialog = new JDialog(this, "Save?");
-		saveDialog.setIconImage(new ImageIcon(Vam.class.getResource("resources/disk.png")).getImage());
-		saveDialog.setSize(350, 150);
-		saveDialog.setModal(true);
-		saveDialog.setAlwaysOnTop(false);
-		saveDialog.setLocationRelativeTo(this);
-		
-		JPanel savePanel = new JPanel();
-		JLabel saveLabel = new JLabel("Do you want to save your changes before you exit?");
-		JButton positive = new JButton("YES");
-		positive.addActionListener(new ActionListener() {
+		if(textChanged) {
+			JDialog saveDialog = new JDialog(this, "Save?");
+			saveDialog.setIconImage(new ImageIcon(Vam.class.getResource("resources/disk.png")).getImage());
+			saveDialog.setSize(350, 150);
+			saveDialog.setModal(true);
+			saveDialog.setAlwaysOnTop(false);
+			saveDialog.setLocationRelativeTo(this);
 			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if(path.equals("")) {
-					saveAs();
-				}else {
-					save();
+			JPanel savePanel = new JPanel();
+			JLabel saveLabel = new JLabel("Do you want to save your changes before you exit?");
+			JButton positive = new JButton("YES");
+			positive.addActionListener(new ActionListener() {
+				
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					if(path.equals("")) {
+						saveAs();
+					}else {
+						save();
+					}
+					System.exit(0);
 				}
-				System.exit(0);
-			}
-		});
-		
-		JButton negative = new JButton("NO");
-		negative.addActionListener(new ActionListener() {
+			});
 			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				System.exit(0);
-			}
-		});
-		
-		savePanel.add(saveLabel);
-		savePanel.add(positive);
-		savePanel.add(negative);
-		
-		saveDialog.add(savePanel);
-		saveDialog.setVisible(true);
+			JButton negative = new JButton("NO");
+			negative.addActionListener(new ActionListener() {
+				
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					System.exit(0);
+				}
+			});
+			
+			savePanel.add(saveLabel);
+			savePanel.add(positive);
+			savePanel.add(negative);
+			
+			saveDialog.add(savePanel);
+			saveDialog.setVisible(true);
+		}else {
+			System.exit(0);
+		}
 	}
 
     private void scanForLabels() {
