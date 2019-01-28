@@ -57,6 +57,7 @@ public class Vam extends JFrame{
 
 	//NB: fuer Regs[REG_SR] Aufbau: (0,0,0,0,0,Overflow,GreaterZero,SmallerZero)
 	private final int[] Regs = new int[18];
+
 	private int numOfBytes = 1; //only use values 1, 2, or 4
 
 	List <Image> holbeinLogos = new ArrayList<Image>();
@@ -423,7 +424,7 @@ public class Vam extends JFrame{
 		}
 		return bin;
 	}
-	
+
 	private void leftPanel() {
 	    panelLeft = new JPanel();
         scrollPane = new JScrollPane(panelLeft);
