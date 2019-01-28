@@ -2,10 +2,10 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
 public class MyWindowListener implements WindowListener{
-	Vam frame;
+	Vam parent;
 	
-	public MyWindowListener(Vam frame) {
-		this.frame = frame;
+	public MyWindowListener(Vam parent) {
+		this.parent = parent;
 	}
 	
 	@Override
@@ -22,7 +22,7 @@ public class MyWindowListener implements WindowListener{
 
 	@Override
 	public void windowClosing(WindowEvent e) {
-		frame.askSave();
+		parent.askSave();
 		
 	}
 

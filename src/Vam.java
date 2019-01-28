@@ -52,18 +52,18 @@ public class Vam extends JFrame{
 	private static final int FRAME_WIDTH = 800;
 	private static final int FRAME_HEIGHT = 600;
 
-	private HashSet<Integer> errorLineList = new HashSet<Integer>(); //List of lines with errors
+	HashSet<Integer> errorLineList = new HashSet<Integer>(); //List of lines with errors
 
 	private boolean processing = true;
-	private boolean textChanged;
+	boolean textChanged;
 
 	private static final int REG_SR = 17;
-	private static final int REG_BZ = 16;
+	static final int REG_BZ = 16;
 	private static final int REG_A = 0;
 	private static final int NREGS = 15;
 
 	//NB: fuer Regs[REG_SR] Aufbau: (0,0,0,0,0,Overflow,GreaterZero,SmallerZero)
-	private final int[] Regs = new int[18];
+	final int[] Regs = new int[18];
 
 	private int numOfBytes = 1; //only use values 1, 2, or 4
 
@@ -71,16 +71,16 @@ public class Vam extends JFrame{
 
 	private HashMap<String, Integer> assemblyLabels = new HashMap<String, Integer>();
 
-	private int numberOfLines = 1; //do not change this value here
+	int numberOfLines = 1; //do not change this value here
 
 	private JPanel panelLeft;
 	private JScrollPane scrollPane;
-	private JPanel lineNumbering = new JPanel();
-	private static ImageIcon EMPTY = new ImageIcon(Vam.class.getResource("resources/empty_16x12.png"));
-	private static ImageIcon ARROW = new ImageIcon(Vam.class.getResource("resources/arrow_16x12.png"));
-	private static ImageIcon ERROR = new ImageIcon(Vam.class.getResource("resources/error_16x15.png"));
-	private static ImageIcon ARROW_ERROR = new ImageIcon(Vam.class.getResource("resources/arrow_error_16x15.png"));
-	private JTextArea textArea = new JTextArea(numberOfLines, 30);
+	JPanel lineNumbering = new JPanel();
+	static ImageIcon EMPTY = new ImageIcon(Vam.class.getResource("resources/empty_16x12.png"));
+	static ImageIcon ARROW = new ImageIcon(Vam.class.getResource("resources/arrow_16x12.png"));
+	static ImageIcon ERROR = new ImageIcon(Vam.class.getResource("resources/error_16x15.png"));
+	static ImageIcon ARROW_ERROR = new ImageIcon(Vam.class.getResource("resources/arrow_error_16x15.png"));
+	JTextArea textArea = new JTextArea(numberOfLines, 30);
 
 	private JPanel panelRight;
 	private JLabel[][] labels = new JLabel[3][19];
@@ -456,7 +456,7 @@ public class Vam extends JFrame{
 	    panelLeft = new JPanel();
         scrollPane = new JScrollPane(panelLeft);
 
-        textArea.getDocument().addDocumentListener(new MyDocumentListener());
+        textArea.getDocument().addDocumentListener(new MyDocumentListener(this));
         scrollPane.getVerticalScrollBar().setUnitIncrement(10); //sets the scroll-speed
 
         lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 3));
@@ -490,7 +490,7 @@ public class Vam extends JFrame{
 		}
 	}
 
-    class MyDocumentListener implements DocumentListener {
+    /*class MyDocumentListener implements DocumentListener {
         final String newline = "\n";
 
 		public void insertUpdate(DocumentEvent e) {
@@ -536,7 +536,7 @@ public class Vam extends JFrame{
 		public void changedUpdate(DocumentEvent e) { 
 			textChanged = true;
 		}
-	}
+	}*/
 
 	// line is the same number as the numbering of the lines on the left side
     // find the corresponding text line from textArea
