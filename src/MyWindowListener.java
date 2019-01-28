@@ -18,15 +18,15 @@ public class MyWindowListener implements WindowListener{
 	public MyWindowListener(Vam parent) {
 		this.parent = parent;
 		
-		red.add(new ImageIcon(Vam.class.getResource("resources/notReallyNecessary/red_128x128.png")).getImage());
-		red.add(new ImageIcon(Vam.class.getResource("resources/notReallyNecessary/red_64x64.png")).getImage());
-		red.add(new ImageIcon(Vam.class.getResource("resources/notReallyNecessary/red_32x32.png")).getImage());
-		red.add(new ImageIcon(Vam.class.getResource("resources/notReallyNecessary/red_16x16.png")).getImage());
+		red.add(new ImageIcon(Vam.class.getResource("resources/colouredImages/red_128x128.png")).getImage());
+		red.add(new ImageIcon(Vam.class.getResource("resources/colouredImages/red_64x64.png")).getImage());
+		red.add(new ImageIcon(Vam.class.getResource("resources/colouredImages/red_32x32.png")).getImage());
+		red.add(new ImageIcon(Vam.class.getResource("resources/colouredImages/red_16x16.png")).getImage());
 		
-		yellow.add(new ImageIcon(Vam.class.getResource("resources/notReallyNecessary/yellow_128x128.png")).getImage());
-		yellow.add(new ImageIcon(Vam.class.getResource("resources/notReallyNecessary/yellow_64x64.png")).getImage());
-		yellow.add(new ImageIcon(Vam.class.getResource("resources/notReallyNecessary/yellow_32x32.png")).getImage());
-		yellow.add(new ImageIcon(Vam.class.getResource("resources/notReallyNecessary/yellow_16x16.png")).getImage());
+		yellow.add(new ImageIcon(Vam.class.getResource("resources/colouredImages/yellow_128x128.png")).getImage());
+		yellow.add(new ImageIcon(Vam.class.getResource("resources/colouredImages/yellow_64x64.png")).getImage());
+		yellow.add(new ImageIcon(Vam.class.getResource("resources/colouredImages/yellow_32x32.png")).getImage());
+		yellow.add(new ImageIcon(Vam.class.getResource("resources/colouredImages/yellow_16x16.png")).getImage());
 	}
 	
 	@Override
