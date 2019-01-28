@@ -58,7 +58,7 @@ public class Vam extends JFrame{
     //NB: fuer Regs[REG_SR] Aufbau: (0,0,0,0,0,Overflow,GreaterZero,SmallerZero)
     final int[] Regs = new int[18];
 
-    private List <Image> holbeinLogos = new ArrayList<Image>();
+    List <Image> holbeinLogos = new ArrayList<Image>();
 
     private HashMap<String, Integer> assemblyLabels = new HashMap<String, Integer>();
 
