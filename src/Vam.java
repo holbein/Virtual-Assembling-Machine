@@ -168,7 +168,6 @@ public class Vam extends JFrame{
     Vam() {
         setSize(FRAME_WIDTH, FRAME_HEIGHT);
         setLocationRelativeTo(null);
-        setResizable(false);
         setLayout(new GridLayout(1, 2));
         setTitle("Virtual Assembling Machine v." + version);
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
