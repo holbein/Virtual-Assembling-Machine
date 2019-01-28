@@ -7,6 +7,9 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.beans.PropertyChangeListener;
 import java.io.*;
 import java.lang.reflect.Method;
@@ -22,6 +25,7 @@ import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -101,10 +105,13 @@ public class Vam extends JFrame{
 
 	Vam(){
 		setSize(FRAME_WIDTH, FRAME_HEIGHT);
+		setLocationRelativeTo(null);
 		setResizable(false);
 		setLayout(new GridLayout(1, 2));
 		setTitle("Virtual Assembling Machine v." + version);
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+		addWindowListener(new MyWindowListener(this));
+		
 
 		holbeinLogos.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_128x128.png")).getImage());
 		holbeinLogos.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_64x64.png")).getImage());
@@ -689,7 +696,7 @@ public class Vam extends JFrame{
 
 		if(errorFrame == null || !errorFrame.isDisplayable()) {
 			errorFrame = new JFrame("Error");
-			errorFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+			errorFrame.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 	        errorFrame.setSize(400, 150);
 			errorFrame.setIconImages(holbeinLogos);
 
@@ -702,9 +709,15 @@ public class Vam extends JFrame{
 		errorFrame.setVisible(true);
 	}
 	
-	private void askSave() {
-		JFrame saveFrame = new JFrame("Save?");
-		saveFrame.setIconImage(new ImageIcon(Vam.class.getResource("resources/disk.png")).getImage());
+	public void askSave() {
+		JDialog saveDialog = new JDialog(this, "Save?");
+		saveDialog.setIconImage(new ImageIcon(Vam.class.getResource("resources/disk.png")).getImage());
+		saveDialog.setSize(350, 150);
+		saveDialog.setModal(true);
+		saveDialog.setAlwaysOnTop(false);
+		saveDialog.setLocationRelativeTo(this);
+		
+		JPanel savePanel = new JPanel();
 		JLabel saveLabel = new JLabel("Do you want to save your changes before you exit?");
 		JButton positive = new JButton("YES");
 		positive.addActionListener(new ActionListener() {
@@ -728,10 +741,13 @@ public class Vam extends JFrame{
 				System.exit(0);
 			}
 		});
-		saveFrame.add(saveLabel);
-		saveFrame.add(positive);
-		saveFrame.add(negative);
-		saveFrame.setVisible(true);
+		
+		savePanel.add(saveLabel);
+		savePanel.add(positive);
+		savePanel.add(negative);
+		
+		saveDialog.add(savePanel);
+		saveDialog.setVisible(true);
 	}
 
     private void scanForLabels() {
