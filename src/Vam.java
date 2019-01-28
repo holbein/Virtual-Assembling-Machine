@@ -47,7 +47,7 @@ public class Vam extends JFrame{
 
     HashSet<Integer> errorLineList = new HashSet<Integer>(); //List of lines with errors
 
-    private boolean processing = true;
+    private boolean processing = false;
     boolean textChanged;
 
     private static final int REG_SR = 17;
@@ -724,11 +724,12 @@ public class Vam extends JFrame{
 
             errorPanel.setLayout(new BoxLayout(errorPanel, BoxLayout.PAGE_AXIS));
         }
-
+        
         errorPanel.add(lError);
         errorFrame.add(errorScroll);
+        errorFrame.setLocationRelativeTo(this);
         errorFrame.setVisible(true);
-
+        
         processing = false;
     }
 
@@ -752,10 +753,11 @@ public class Vam extends JFrame{
 
             errorPanel.setLayout(new BoxLayout(errorPanel, BoxLayout.PAGE_AXIS));
         }
-
+        
         processing = false;
         errorPanel.add(lError);
         errorFrame.add(errorScroll);
+        errorFrame.setLocationRelativeTo(this);
         errorFrame.setVisible(true);
     }
 
