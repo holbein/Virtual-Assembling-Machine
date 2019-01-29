@@ -40,7 +40,13 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-
+/**
+ * This class is the main class and when it is executed through {@link #main(String[])} the Virtual Assembling Machine starts running.
+ * The classes {@link MyDocumentListener} and {@link MyWindowListener} are also used.
+ * @author VictorOle
+ * @author SBester001
+ * @version 1.2.0
+ */
 @SuppressWarnings("serial")
 public class Vam extends JFrame{
     private static final String version = "1.2.0";
@@ -98,12 +104,9 @@ public class Vam extends JFrame{
 
     public interface registerWidth {
         public int width();
-
         // Check for overflow
         boolean isOverflow (int value);
-
         public int cast(int value);
-
         public String toBinaryString(int value);
     };
 
@@ -168,7 +171,9 @@ public class Vam extends JFrame{
     private boolean isOverflow (int value) { return widthHandler().isOverflow(value); }
     private int cast (int value) { return widthHandler().cast(value); }
 
-
+    /**
+     * Constructs a new Virtual Assembly Machine.
+     */
     Vam() {
         setSize(FRAME_WIDTH, FRAME_HEIGHT);
         setLocationRelativeTo(null);
@@ -217,6 +222,9 @@ public class Vam extends JFrame{
 
     }
 
+    /**
+     * Sets the {@link JMenuBar} at the top of the JFrame.
+     */
     @SuppressWarnings("deprecation")
     private void setMenu() {
         JMenu file = new JMenu("File");
@@ -489,7 +497,7 @@ public class Vam extends JFrame{
 
     private void printLine(int line) {
         String[] row = new String[Regs.length+1];
-        row[0] = getLineNoComment(line+": "+getTextInLine(line));
+        row[0] = line+": "+getLineNoComment(getTextInLine(line));
         row[1] = ""+Regs[REG_SR];
         row[2] = ""+Regs[REG_BZ];
         for (int i=0; i<=NREGS; i++) {
@@ -784,7 +792,7 @@ public class Vam extends JFrame{
         int value = -1;
         try {
             value = Integer.parseInt(arg);
-        } catch (NumberFormatException ex) {
+        } catch (NumberFormatException e) {
             if (command.charAt(0) != 'J' || (value = getAssemblyLabelLine(arg)) <= 0) {
                 error("Number format exception: \""+ input + "\" in line: "+Regs[REG_BZ]);
                 return;
@@ -798,7 +806,7 @@ public class Vam extends JFrame{
             return;
         } catch (NoSuchMethodException e) {
             def(input);
-        } catch (Exception ex) {
+        } catch (Exception e) {
             error("Something else bad happened: " + input);
         }
     }
@@ -901,9 +909,12 @@ public class Vam extends JFrame{
         return (assemblyLabels.containsKey(tag) ? assemblyLabels.get(tag) : -1);
     }
 
-    public void machine_END(int unused) {
-        processing = false;
-        Regs[REG_BZ]++;
+    public boolean isBadRegister(int register) {
+        boolean bad = (register <= 0 || register >= NREGS);
+        if (bad) {
+            error(register+" in line: "+Regs[REG_BZ]+" is an invalid register!");
+        }
+        return bad;
     }
 
     private void setSignStatus(int value){
@@ -927,6 +938,32 @@ public class Vam extends JFrame{
         Regs[REG_A] = cast(value);
     }
 
+    public void machine_LOAD(int register) {
+        if (isBadRegister(register)) return;
+
+        Regs[REG_A] = Regs[register];
+
+        setSignStatus(Regs[REG_A]);
+        Regs[REG_BZ]++;
+    }
+
+    public void machine_DLOAD(int number) {
+        if (isOverflow(number)) {
+            error(number+" in line: "+Regs[REG_BZ]+" is a too big number");
+            return;
+        }
+        setSignStatus(number);
+        Regs[REG_A] = number;
+        Regs[REG_BZ]++;
+    }
+
+    public void machine_STORE(int register) {
+        if (isBadRegister(register)) return;
+
+        Regs[register] = Regs[REG_A];
+        Regs[REG_BZ]++;
+    }
+
     public void machine_ADD(int register) {
         if (isBadRegister(register)) return;
 
@@ -937,13 +974,33 @@ public class Vam extends JFrame{
 
     }
 
-    public void machine_DLOAD(int number) {
-        if (isOverflow(number)) {
-            error(number+" in line: "+Regs[REG_BZ]+" is a too big number");
+    public void machine_SUB(int register) {
+        if (isBadRegister(register)) return;
+
+        int temp = -1;
+        try {
+            temp = Regs[REG_A] - Regs[register];
+        } catch(Exception e) {
+            error(register+" in line: "+Regs[REG_BZ]+" is not a valid register!");
             return;
         }
-        setSignStatus(number);
-        Regs[REG_A] = number;
+
+        safeNumberCast(temp);
+        Regs[REG_BZ]++;
+    }
+
+    public void machine_MULT(int register) {
+        if (isBadRegister(register)) return;
+
+        int temp = -1;
+        try {
+            temp = Regs[REG_A] * Regs[register];
+        }catch(Exception e) {
+            def(""+register);
+            return;
+        }
+
+        safeNumberCast(temp);
         Regs[REG_BZ]++;
     }
 
@@ -960,6 +1017,15 @@ public class Vam extends JFrame{
 
         safeNumberCast(temp);
         Regs[REG_BZ]++;
+    }
+
+    public void machine_JUMP(int line) {
+        if (isOverflow(line)) {
+            error("invalid line number: " + line);
+            return;
+        }
+
+        Regs[REG_BZ] = line;
     }
 
     public void machine_JEQ(int line) {
@@ -1016,71 +1082,8 @@ public class Vam extends JFrame{
         }
     }
 
-    public void machine_JUMP(int line) {
-        if (isOverflow(line)) {
-            error("invalid line number: " + line);
-            return;
-        }
-
-        Regs[REG_BZ] = line;
-    }
-
-    public void machine_LOAD(int register) {
-        if (isBadRegister(register)) return;
-
-        Regs[REG_A] = Regs[register];
-
-        setSignStatus(Regs[REG_A]);
-        Regs[REG_BZ]++;
-    }
-
-    public void machine_MULT(int register) {
-        if (isBadRegister(register)) return;
-
-        int temp = -1;
-        try {
-            temp = Regs[REG_A] * Regs[register];
-        }catch(Exception e) {
-            def(""+register);
-            return;
-        }
-
-        safeNumberCast(temp);
-        Regs[REG_BZ]++;
-    }
-
-
-    public boolean isBadRegister(int register) {
-        boolean bad = (register <= 0 || register >= NREGS);
-        if (bad) {
-            error(register+" in line: "+Regs[REG_BZ]+" is an invalid register!");
-        }
-        return bad;
-    }
-
-    public void machine_STORE(int register) {
-        if (isBadRegister(register)) return;
-
-        Regs[register] = Regs[REG_A];
-        Regs[REG_BZ]++;
-    }
-
-    public void machine_SUB(int register) {
-        processing = (register >= 0 && register <= NREGS);
-        if (!processing) {
-            error(register+" in line: "+Regs[REG_BZ]+" is not a valid register!");
-            return;
-        }
-
-        int temp = -1;
-        try {
-            temp = Regs[REG_A] - Regs[register];
-        } catch(Exception e) {
-            error(register+" in line: "+Regs[REG_BZ]+" is not a valid register!");
-            return;
-        }
-
-        safeNumberCast(temp);
+    public void machine_END(int unused) {
+        processing = false;
         Regs[REG_BZ]++;
     }
 }
