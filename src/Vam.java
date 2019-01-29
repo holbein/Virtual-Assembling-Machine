@@ -53,6 +53,7 @@ public class Vam extends JFrame{
     private JFrame processFrame;
     private JTable processTable;
     private boolean showProcessTable = false;
+
     private boolean processing = false;
     boolean textChanged;
 
@@ -64,7 +65,7 @@ public class Vam extends JFrame{
     //NB: fuer Regs[REG_SR] Aufbau: (0,0,0,0,0,Overflow,GreaterZero,SmallerZero)
     final int[] Regs = new int[18];
 
-    List <Image> holbeinLogos = new ArrayList<Image>();
+    static final List <Image> holbeinLogos = new ArrayList<Image>(5);
 
     private HashMap<String, Integer> assemblyLabels = new HashMap<String, Integer>();
 
@@ -81,13 +82,11 @@ public class Vam extends JFrame{
 
     private JPanel panelRight;
     private JLabel[][] labels = new JLabel[3][19];
-    private JButton start;
-    private JButton oneStep;
-    private JButton reset;
+    private JButton start, oneStep, reset;
 
     private JFrame errorFrame; //small JFrame with error message, that pops up when there was an error
-    private JPanel errorPanel = new JPanel();
-    private JScrollPane errorScroll = new JScrollPane(errorPanel);
+    private final JPanel errorPanel = new JPanel();
+    private final JScrollPane errorScroll = new JScrollPane(errorPanel);
 
     // File menu items
     private JMenuItem save, saveAs, open, quit;
@@ -459,6 +458,7 @@ public class Vam extends JFrame{
                 processFrame = new JFrame("Table of Processes");
                 processFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
                 processFrame.setSize(700, 400);
+                processFrame.setIconImages(holbeinLogos);
 
                 String[] columnNames = {"Command", "SR", "BZ", "A", "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9", "R10", "R11", "R12", "R13", "R14", "R15"};
                 String[][] data = {{"<Initial>", "0", "1", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"}};
