@@ -32,10 +32,13 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 
 
 @SuppressWarnings("serial")
@@ -47,13 +50,16 @@ public class Vam extends JFrame{
 
     HashSet<Integer> errorLineList = new HashSet<Integer>(); //List of lines with errors
 
+    private JFrame processFrame;
+    private JTable processTable;
+    private boolean showProcessTable = false;
     private boolean processing = false;
     boolean textChanged;
 
-    private static final int REG_SR = 17;
+    static final int REG_SR = 17;
     static final int REG_BZ = 16;
-    private static final int REG_A = 0;
-    private static final int NREGS = 15;
+    static final int REG_A = 0;
+    static final int NREGS = 15;
 
     //NB: fuer Regs[REG_SR] Aufbau: (0,0,0,0,0,Overflow,GreaterZero,SmallerZero)
     final int[] Regs = new int[18];
@@ -67,10 +73,10 @@ public class Vam extends JFrame{
     private JPanel panelLeft;
     private JScrollPane scrollPane;
     JPanel lineNumbering = new JPanel();
-    static ImageIcon EMPTY = new ImageIcon(Vam.class.getResource("resources/empty_16x12.png"));
-    static ImageIcon ARROW = new ImageIcon(Vam.class.getResource("resources/arrow_16x12.png"));
-    static ImageIcon ERROR = new ImageIcon(Vam.class.getResource("resources/error_16x15.png"));
-    static ImageIcon ARROW_ERROR = new ImageIcon(Vam.class.getResource("resources/arrow_error_16x15.png"));
+    static final ImageIcon EMPTY = new ImageIcon(Vam.class.getResource("resources/empty_16x12.png"));
+    static final ImageIcon ARROW = new ImageIcon(Vam.class.getResource("resources/arrow_16x12.png"));
+    static final ImageIcon ERROR = new ImageIcon(Vam.class.getResource("resources/error_16x15.png"));
+    static final ImageIcon ARROW_ERROR = new ImageIcon(Vam.class.getResource("resources/arrow_error_16x15.png"));
     JTextArea textArea = new JTextArea(numberOfLines, 30);
 
     private JPanel panelRight;
@@ -154,7 +160,6 @@ public class Vam extends JFrame{
     };
 
     private registerWidth widthHandler_ = null;
-
 
     // Forwards
     private registerWidth widthHandler() {
@@ -289,9 +294,20 @@ public class Vam extends JFrame{
         }
         bit_buttons[0].setSelected(true); // default is 8-bit
 
+        JRadioButton showTable = new JRadioButton(new AbstractAction ("Show Table"){
+            @Override
+            public void actionPerformed (ActionEvent e){
+                updateProcessTableStatus();
+            }
+        });
+
+        JMenu view = new JMenu("View");
+        view.add(showTable);
+
         JMenuBar mbar = new JMenuBar();
         mbar.add(file);
         mbar.add(edit);
+        mbar.add(view);
 
         setJMenuBar(mbar);
     }
@@ -369,18 +385,62 @@ public class Vam extends JFrame{
         }
     }
 
-    private void onRegisterWidthChange() {
+    public void askSave() {
+        if (textChanged) {
+            JDialog saveDialog = new JDialog(this, "Save?");
+            saveDialog.setIconImage(new ImageIcon(Vam.class.getResource("resources/disk.png")).getImage());
+            saveDialog.setSize(300, 100);
+            saveDialog.setModal(true);
+            saveDialog.setAlwaysOnTop(false);
+            saveDialog.setLocationRelativeTo(this);
+
+            JPanel savePanel = new JPanel();
+            JLabel saveLabel = new JLabel("Do you want to save your changes before you exit?");
+            JButton positive = new JButton("YES");
+            positive.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if (path.equals("")) {
+                        saveAs();
+                    } else {
+                        save();
+                    }
+                    System.exit(0);
+                }
+            });
+
+            JButton negative = new JButton("NO");
+            negative.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    System.exit(0);
+                }
+            });
+
+            savePanel.add(saveLabel);
+            savePanel.add(positive);
+            savePanel.add(negative);
+
+            saveDialog.add(savePanel);
+            saveDialog.setVisible(true);
+        } else {
+            System.exit(0);
+        }
+    }
+
+    private void changeRegisterWidth(registerWidth handler) {
+        widthHandler_ = handler;
         if (isOverflow(Regs[REG_A])) {
             error("Overflow in A!");
         }
-
         safeNumberCast(Regs[REG_A]);
 
         if (isOverflow(Regs[REG_BZ])) {
             error("Overflow in BZ!");
         }
         Regs[REG_BZ] = cast(Regs[REG_BZ]);
-
 
         for(int i=1; i<=NREGS; i++) {
             if (isOverflow(Regs[i])) {
@@ -392,9 +452,54 @@ public class Vam extends JFrame{
         reDrawRightPanel();
     }
 
-    private void changeRegisterWidth(registerWidth handler) {
-        widthHandler_ = handler;
-        onRegisterWidthChange();
+    private void updateProcessTableStatus() {
+        showProcessTable = !showProcessTable;
+        if (showProcessTable) {
+            if (processFrame == null || !processFrame.isVisible()) {
+                processFrame = new JFrame("Table of Processes");
+                processFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+                processFrame.setSize(700, 400);
+
+                String[] columnNames = {"Command", "SR", "BZ", "A", "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9", "R10", "R11", "R12", "R13", "R14", "R15"};
+                String[][] data = {{"<Initial>", "0", "1", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"}};
+                DefaultTableModel model = new DefaultTableModel(data, columnNames){
+                    @Override
+                    public boolean isCellEditable(int row, int column) {
+                       return false;
+                    }
+                };
+                processTable = new JTable(model);
+                JScrollPane scrollProc = new JScrollPane(processTable);
+                processTable.setFillsViewportHeight(true);
+                processTable.getColumnModel().getColumn(0).setPreferredWidth(250);
+                //Use if you want to disable beeing able moving the columns:  processingTable.getTableHeader().setReorderingAllowed(false);
+
+                DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
+                rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
+
+                for (int i=1; i<processTable.getColumnCount(); i++) {
+                    processTable.getColumnModel().getColumn(i).setCellRenderer(rightRenderer);
+                }
+
+                processFrame.add(scrollProc);
+                processFrame.setVisible(true);
+            }
+        }
+    }
+
+    private void printLine(int line) {
+        String[] row = new String[Regs.length+1];
+        row[0] = getLineNoComment(line+": "+getTextInLine(line));
+        row[1] = ""+Regs[REG_SR];
+        row[2] = ""+Regs[REG_BZ];
+        for (int i=0; i<=NREGS; i++) {
+            row[i+3] = ""+Regs[i];
+        }
+        
+        ((DefaultTableModel)processTable.getModel()).addRow(row);
+        if (!processFrame.isVisible()){
+            processFrame.setVisible(true);
+        }
     }
 
     private void rightPanel() {
@@ -585,8 +690,11 @@ public class Vam extends JFrame{
         errorLineList.clear();
         errorPanel.removeAll();
         assemblyLabels.clear();
+        while (processTable != null && 1 < ((DefaultTableModel)processTable.getModel()).getRowCount()){
+            ((DefaultTableModel)processTable.getModel()).removeRow(1);
+        }
 
-        for(int i=0; i<Regs.length; i++) {
+        for (int i=0; i<Regs.length; i++) {
             Regs[i] = 0;
         }
 
@@ -601,12 +709,16 @@ public class Vam extends JFrame{
     }
 
     private void oneStep() {
-        // System.out.println("| SR| BZ|  A| R0| R1| R2| R3| R4| R5| R6| R7| R8| R9|R10|R11|R12|R13|R14|R15");
         scanForLabels();
 
         if (processing && 0 < Regs[REG_BZ] && Regs[REG_BZ] <= textArea.getLineCount()) {
-            check(getTextInLine(Regs[REG_BZ]));
-            // printValues();
+            if (showProcessTable){
+                int holdLine = Regs[REG_BZ];
+                check(getTextInLine(Regs[REG_BZ]));
+                printLine(holdLine);
+            } else {
+                check(getTextInLine(Regs[REG_BZ]));
+            }
         }
 
         reDrawRightPanel();
@@ -614,29 +726,20 @@ public class Vam extends JFrame{
     }
 
     private void start() {
-        // System.out.println("| SR| BZ|  A| R0| R1| R2| R3| R4| R5| R6| R7| R8| R9|R10|R11|R12|R13|R14|R15");
         scanForLabels();
 
         while (processing && 0 < Regs[REG_BZ] && Regs[REG_BZ] <= textArea.getLineCount()) {
-            check(getTextInLine(Regs[REG_BZ]));
-            // printValues();
+            if (showProcessTable){
+                int holdLine = Regs[REG_BZ];
+                check(getTextInLine(Regs[REG_BZ]));
+                printLine(holdLine);
+            } else {
+                check(getTextInLine(Regs[REG_BZ]));
+            }
         }
 
         reDrawRightPanel();
         reDrawLeftIcons();
-    }
-
-    private void printValues() {
-        for (int i=0; i<Regs.length; i++) {
-            System.out.print("+---");
-        }
-        System.out.println();
-        for (int i=0; i<Regs.length; i++) {
-            String fmt = String.format("%d", Regs[i]);
-            if (fmt.length() > 3) { fmt = fmt.substring(fmt.length()-3); }
-            System.out.print("|" + fmt);
-        }
-        System.out.println();
     }
 
     /**
@@ -760,51 +863,6 @@ public class Vam extends JFrame{
         errorFrame.setVisible(true);
     }
 
-    public void askSave() {
-        if (textChanged) {
-            JDialog saveDialog = new JDialog(this, "Save?");
-            saveDialog.setIconImage(new ImageIcon(Vam.class.getResource("resources/disk.png")).getImage());
-            saveDialog.setSize(350, 150);
-            saveDialog.setModal(true);
-            saveDialog.setAlwaysOnTop(false);
-            saveDialog.setLocationRelativeTo(this);
-
-            JPanel savePanel = new JPanel();
-            JLabel saveLabel = new JLabel("Do you want to save your changes before you exit?");
-            JButton positive = new JButton("YES");
-            positive.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (path.equals("")) {
-                        saveAs();
-                    } else {
-                        save();
-                    }
-                    System.exit(0);
-                }
-            });
-
-            JButton negative = new JButton("NO");
-            negative.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    System.exit(0);
-                }
-            });
-
-            savePanel.add(saveLabel);
-            savePanel.add(positive);
-            savePanel.add(negative);
-
-            saveDialog.add(savePanel);
-            saveDialog.setVisible(true);
-        } else {
-            System.exit(0);
-        }
-    }
-
     private void scanForLabels() {
         assemblyLabels.clear();
 
@@ -869,10 +927,10 @@ public class Vam extends JFrame{
         Regs[REG_A] = cast(value);
     }
 
-    public void machine_ADD(int number) {
-        if (isBadRegister(number)) return;
+    public void machine_ADD(int register) {
+        if (isBadRegister(register)) return;
 
-        int temp = Regs[REG_A] + Regs[number];
+        int temp = Regs[REG_A] + Regs[register];
 
         safeNumberCast(temp);
         Regs[REG_BZ]++;
@@ -889,12 +947,12 @@ public class Vam extends JFrame{
         Regs[REG_BZ]++;
     }
 
-    public void machine_DIV(int number) {
-        if (isBadRegister(number)) return;
+    public void machine_DIV(int register) {
+        if (isBadRegister(register)) return;
 
         int temp = 0;
         try {
-            temp = Regs[REG_A] / Regs[number];
+            temp = Regs[REG_A] / Regs[register];
         }catch(Exception e) {
             error("Division by zero in line: "+Regs[REG_BZ]+" is not allowed");
             return;
@@ -967,23 +1025,23 @@ public class Vam extends JFrame{
         Regs[REG_BZ] = line;
     }
 
-    public void machine_LOAD(int number) {
-        if (isBadRegister(number)) return;
+    public void machine_LOAD(int register) {
+        if (isBadRegister(register)) return;
 
-        Regs[REG_A] = Regs[number];
+        Regs[REG_A] = Regs[register];
 
         setSignStatus(Regs[REG_A]);
         Regs[REG_BZ]++;
     }
 
-    public void machine_MULT(int number) {
-        if (isBadRegister(number)) return;
+    public void machine_MULT(int register) {
+        if (isBadRegister(register)) return;
 
         int temp = -1;
         try {
-            temp = Regs[REG_A] * Regs[number];
+            temp = Regs[REG_A] * Regs[register];
         }catch(Exception e) {
-            def(""+number);
+            def(""+register);
             return;
         }
 
@@ -992,33 +1050,33 @@ public class Vam extends JFrame{
     }
 
 
-    public boolean isBadRegister(int number) {
-        boolean bad = (number <= 0 || number >= NREGS);
+    public boolean isBadRegister(int register) {
+        boolean bad = (register <= 0 || register >= NREGS);
         if (bad) {
-            error(number+" in line: "+Regs[REG_BZ]+" is an invalid register!");
+            error(register+" in line: "+Regs[REG_BZ]+" is an invalid register!");
         }
         return bad;
     }
 
-    public void machine_STORE(int number) {
-        if (isBadRegister(number)) return;
+    public void machine_STORE(int register) {
+        if (isBadRegister(register)) return;
 
-        Regs[number] = Regs[REG_A];
+        Regs[register] = Regs[REG_A];
         Regs[REG_BZ]++;
     }
 
-    public void machine_SUB(int number) {
-        processing = (number >= 0 && number <= NREGS);
+    public void machine_SUB(int register) {
+        processing = (register >= 0 && register <= NREGS);
         if (!processing) {
-            error(number+" in line: "+Regs[REG_BZ]+" is not a valid register!");
+            error(register+" in line: "+Regs[REG_BZ]+" is not a valid register!");
             return;
         }
 
         int temp = -1;
         try {
-            temp = Regs[REG_A] - Regs[number];
+            temp = Regs[REG_A] - Regs[register];
         } catch(Exception e) {
-            error(number+" in line: "+Regs[REG_BZ]+" is not a valid register!");
+            error(register+" in line: "+Regs[REG_BZ]+" is not a valid register!");
             return;
         }
 
