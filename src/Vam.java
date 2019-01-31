@@ -6,11 +6,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Image;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.InputMethodEvent;
-import java.awt.event.InputMethodListener;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -24,6 +21,7 @@ import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -61,11 +59,11 @@ public class Vam extends JFrame{
 
     private JFrame processFrame;
     private JTable processTable;
-    private boolean showProcessTable = false;
 
     private boolean processing = false;
     boolean textChanged;
     UndoManager undoManager = new UndoManager();
+    boolean flash = true;
 
     static final int REG_SR = 17;
     static final int REG_BZ = 16;
@@ -280,15 +278,26 @@ public class Vam extends JFrame{
         
         edit.add(subMenu);
 
-        JRadioButton showTable = new JRadioButton(new AbstractAction ("Show Table"){
+        JMenuItem showTable = new JMenuItem(new AbstractAction ("Show Table"){
             @Override
             public void actionPerformed (ActionEvent e){
                 updateProcessTableStatus();
             }
         });
+        
+        JCheckBoxMenuItem editFlash = new JCheckBoxMenuItem(new AbstractAction ("Flash if not used"){
+            @Override
+            public void actionPerformed (ActionEvent e){
+                flash = !flash;
+            }
+        });
+        editFlash.setSelected(true); //default true --> flashing if not used
+        editFlash.setAccelerator(KeyStroke.getKeyStroke("control alt N")); //shortcut ctrl+alt+N
+        
 
         JMenu view = new JMenu("View");
         view.add(showTable);
+        view.add(editFlash);
 
         JMenuBar mbar = new JMenuBar();
         mbar.add(file);
@@ -442,40 +451,38 @@ public class Vam extends JFrame{
         reDrawRightPanel();
     }
 
-    private void updateProcessTableStatus() {
-        showProcessTable = !showProcessTable;
-        if (showProcessTable) {
-            if (processFrame == null || !processFrame.isVisible()) {
-                processFrame = new JFrame("Table of Processes");
-                processFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-                processFrame.setSize(700, 400);
-                processFrame.setIconImages(holbeinLogos);
+    private void updateProcessTableStatus() {        
+        if (processFrame == null || !processFrame.isVisible()) {
+            processFrame = new JFrame("Table of Processes");
+            processFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+            processFrame.setSize(700, 400);
+            processFrame.setIconImages(holbeinLogos);
+            processFrame.setAlwaysOnTop(true);
 
-                String[] columnNames = {"Command", "SR", "BZ", "A", "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9", "R10", "R11", "R12", "R13", "R14", "R15"};
-                String[][] data = {{"<Initial>", "0", "1", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"}};
-                DefaultTableModel model = new DefaultTableModel(data, columnNames){
-                    @Override
-                    public boolean isCellEditable(int row, int column) {
-                       return false;
-                    }
-                };
-                processTable = new JTable(model);
-                JScrollPane scrollProc = new JScrollPane(processTable);
-                processTable.setFillsViewportHeight(true);
-                processTable.getColumnModel().getColumn(0).setPreferredWidth(250);
-                //Use if you want to disable being able moving the columns:  processingTable.getTableHeader().setReorderingAllowed(false);
-
-                DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
-                rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
-
-                for (int i=1; i<processTable.getColumnCount(); i++) {
-                    processTable.getColumnModel().getColumn(i).setCellRenderer(rightRenderer);
+            String[] columnNames = {"Command", "SR", "BZ", "A", "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9", "R10", "R11", "R12", "R13", "R14", "R15"};
+            String[][] data = {{"<Initial>", "0", "1", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"}};
+            DefaultTableModel model = new DefaultTableModel(data, columnNames){
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                   return false;
                 }
+            };
+            processTable = new JTable(model);
+            JScrollPane scrollProc = new JScrollPane(processTable);
+            processTable.setFillsViewportHeight(true);
+            processTable.getColumnModel().getColumn(0).setPreferredWidth(250);
+            //Use if you want to disable being able moving the columns:  processingTable.getTableHeader().setReorderingAllowed(false);
 
-                processFrame.add(scrollProc);
-                processFrame.setVisible(true);
+            DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
+            rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
+
+            for (int i=1; i<processTable.getColumnCount(); i++) {
+                processTable.getColumnModel().getColumn(i).setCellRenderer(rightRenderer);
             }
-        }
+
+            processFrame.add(scrollProc);
+            processFrame.setVisible(true);
+        }        
     }
 
     private void printLine(int line) {
@@ -673,7 +680,7 @@ public class Vam extends JFrame{
         scanForLabels();
 
         if (processing && 0 < Regs[REG_BZ] && Regs[REG_BZ] <= textArea.getLineCount()) {
-            if (showProcessTable){
+            if (processFrame != null && processFrame.isVisible()){
                 int holdLine = Regs[REG_BZ];
                 check(getTextInLine(Regs[REG_BZ]));
                 printLine(holdLine);
@@ -690,7 +697,7 @@ public class Vam extends JFrame{
         scanForLabels();
 
         while (processing && 0 < Regs[REG_BZ] && Regs[REG_BZ] <= textArea.getLineCount()) {
-            if (showProcessTable){
+            if (processFrame != null && processFrame.isVisible()){
                 int holdLine = Regs[REG_BZ];
                 check(getTextInLine(Regs[REG_BZ]));
                 printLine(holdLine);

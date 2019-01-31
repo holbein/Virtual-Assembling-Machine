@@ -47,7 +47,7 @@ public class MyWindowListener implements WindowListener{
 
     @Override
     public void windowDeactivated(WindowEvent e) {
-        iconified = true;
+        iconified = parent.flash;
         new coloreChanger(parent).start();
     }
 
@@ -59,7 +59,7 @@ public class MyWindowListener implements WindowListener{
 
     @Override
     public void windowIconified(WindowEvent e) {
-        iconified = true;
+        iconified = parent.flash;
         new coloreChanger(parent).start();
     }
 
