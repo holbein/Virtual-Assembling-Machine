@@ -65,3 +65,5 @@ Other important stuff:
   - SR: 
     - the Status Register contains the flags whether the result of the last logical operation was too big for one byte (Overflow) an if it was      bigger or smaller than zero
     
+    
+    PS: The icons are from http://famfamfam.com/ !
