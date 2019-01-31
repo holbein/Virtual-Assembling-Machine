@@ -728,6 +728,11 @@ public class Vam extends JFrame{
             machine_END(-1);
             return;
         }
+        
+        if(input.equals("") || input.substring(0, 2).equals("--")) {
+        	Regs[REG_BZ]++;
+        	return;
+        }
 
         int space = input.indexOf(' ');
         if (space == -1) {
