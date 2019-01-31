@@ -1,6 +1,7 @@
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -43,10 +44,10 @@ import javax.swing.table.DefaultTableModel;
 
 /**
  * This class is the main class and when it is executed through {@link #main(String[])} the Virtual Assembling Machine starts running.
- * The classes {@link MyDocumentListener} and {@link MyWindowListener} are also used.
+ * The classes {@link MyDocumentListener}, {@link MyWindowListener} and {@link RegisterWidth} are also used.
  * @author VictorOle
  * @author SBester001
- * @version 1.2.0
+ * @version 1.2.1
  */
 @SuppressWarnings("serial")
 public class Vam extends JFrame{
@@ -98,12 +99,12 @@ public class Vam extends JFrame{
     private JMenuItem save, saveAs, open, quit;
     private String path = "";
 
-    private registerWidth.Handler widthHandler_ = null;
+    private RegisterWidth.Handler widthHandler = null;
 
     // Forwards
-    private registerWidth.Handler widthHandler() {
-        if (widthHandler_ == null) widthHandler_ = new registerWidth.int8Width();
-        return widthHandler_;
+    private RegisterWidth.Handler widthHandler() {
+        if (widthHandler == null) widthHandler = new RegisterWidth.int8Width();
+        return widthHandler;
     }
 
     private boolean isOverflow (int value) { return widthHandler().isOverflow(value); }
@@ -115,6 +116,7 @@ public class Vam extends JFrame{
      */
     Vam() {
         setSize(FRAME_WIDTH, FRAME_HEIGHT);
+        setMinimumSize(new Dimension(500, 385));
         setLocationRelativeTo(null);
         setLayout(new GridLayout(1, 2));
         setTitle("Virtual Assembling Machine v." + version);
@@ -128,11 +130,13 @@ public class Vam extends JFrame{
         holbeinLogos.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_8x8.png")).getImage());
         setIconImages(holbeinLogos);
 
+        addleftPanel();
+        addRightPanel();
+
         reset();
 
         setMenu();
 
-        add(panelRight);
         setVisible(true);
 
         textArea.addInputMethodListener(new InputMethodListener() {
@@ -161,7 +165,7 @@ public class Vam extends JFrame{
     }
 
     /**
-     * Sets the {@link JMenuBar} at the top of the JFrame.
+     * Sets the {@link JMenuBar} at the top of the JFrame of {@link Vam}.
      */
     @SuppressWarnings("deprecation")
     private void setMenu() {
@@ -199,7 +203,7 @@ public class Vam extends JFrame{
                 new AbstractAction("Quit", new ImageIcon(Vam.class.getResource("resources/cancel.png"))) {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        dispose();
+                        askSave();
                     }
                 });
         file.add(quit);
@@ -214,19 +218,19 @@ public class Vam extends JFrame{
             new JRadioButton(new AbstractAction ("Use 8 Bits"){
                 @Override
                 public void actionPerformed (ActionEvent e){
-                    changeRegisterWidth(new registerWidth.int8Width());
+                    changeRegisterWidth(new RegisterWidth.int8Width());
                 }
             }),
             new JRadioButton(new AbstractAction ("Use 16 Bits"){
                 @Override
                 public void actionPerformed (ActionEvent e){
-                    changeRegisterWidth(new registerWidth.int16Width());
+                    changeRegisterWidth(new RegisterWidth.int16Width());
                 }
             }),
             new JRadioButton(new AbstractAction ("Use 32 Bits"){
                 @Override
                 public void actionPerformed (ActionEvent e){
-                    changeRegisterWidth(new registerWidth.int32Width());
+                    changeRegisterWidth(new RegisterWidth.int32Width());
                 }
             })
         };
@@ -376,11 +380,11 @@ public class Vam extends JFrame{
     }
 
     /**
-     * 
-     * @param handler 
+     * Changes the register width saved in {@link widthHandler} to the selected width.
+     * @param handler Object, who's instance implements {@link RegisterWidth.Handler} and represents the new register width.
      */
-    private void changeRegisterWidth(registerWidth.Handler handler) {
-        widthHandler_ = handler;
+    private void changeRegisterWidth(RegisterWidth.Handler handler) {
+        widthHandler = handler;
         if (isOverflow(Regs[REG_A])) {
             error("Overflow in A!");
         }
@@ -452,7 +456,62 @@ public class Vam extends JFrame{
         }
     }
 
-    private void rightPanel() {
+    /**
+     * Initializes the left panel including adding it to the {@link JFrame}.
+     */
+    private void addleftPanel() {
+        panelLeft = new JPanel(new BorderLayout());
+        JScrollPane scrollPane = new JScrollPane(panelLeft);
+
+        textArea.getDocument().addDocumentListener(new MyDocumentListener(this));
+        scrollPane.getVerticalScrollBar().setUnitIncrement(10); //sets the scroll-speed
+
+        lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 3));
+        lineNumbering.add(new JLabel(EMPTY));
+        lineNumbering.add(new JLabel(String.valueOf(numberOfLines)+"  "));
+        lineNumbering.add(new JLabel(":"));
+
+        JPanel panelNorth = new JPanel(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridy = 0;
+        c.gridx = 0;
+        panelNorth.add(lineNumbering, c);
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 1;
+        c.weightx = 1;
+        panelNorth.add(textArea, c);
+        panelLeft.add(panelNorth, BorderLayout.NORTH);
+
+        add(scrollPane);
+    }
+
+
+    /**
+     * Is called to refresh the icons left of the line numbering.
+     */
+    private void reDrawLeftIcons() {
+        lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 3));
+
+        for(int lineNo=1; lineNo <= numberOfLines; ++lineNo) {
+            JLabel lab = (JLabel) lineNumbering.getComponent(3*(lineNo-1));
+
+            if (errorLineList.contains(lineNo)){
+                if (Regs[REG_BZ] == lineNo) {
+                    lab.setIcon(ARROW_ERROR);
+                } else {
+                    lab.setIcon(ERROR);
+                }
+            } else {
+                if (Regs[REG_BZ] == lineNo) {
+                    lab.setIcon(ARROW);
+                } else {
+                    lab.setIcon(EMPTY);
+                }
+            }
+        }
+    }
+
+    private void addRightPanel() {
         panelRight = new JPanel(new GridBagLayout());
 
         labels[0][0] = new JLabel("SR", SwingConstants.CENTER);
@@ -514,6 +573,8 @@ public class Vam extends JFrame{
         panelRight.add(oneStep, c);
         c.gridx = 2;
         panelRight.add(reset, c);
+
+        add(panelRight);
     }
 
     //call this method, to update the values
@@ -525,56 +586,6 @@ public class Vam extends JFrame{
         for (int i=0; i<=NREGS; i++) {
             labels[1][i+2].setText(widthHandler().toBinaryString(Regs[i]));
             labels[2][i+2].setText(Integer.toString(Regs[i]));
-        }
-    }
-
-    private void addleftPanel() {
-        panelLeft = new JPanel(new BorderLayout());
-        JScrollPane scrollPane = new JScrollPane(panelLeft);
-
-        textArea.getDocument().addDocumentListener(new MyDocumentListener(this));
-        scrollPane.getVerticalScrollBar().setUnitIncrement(10); //sets the scroll-speed
-
-        lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 3));
-        lineNumbering.add(new JLabel(EMPTY));
-        lineNumbering.add(new JLabel(String.valueOf(numberOfLines)+"  "));
-        lineNumbering.add(new JLabel(":"));
-
-        JPanel panelNorth = new JPanel(new GridBagLayout());
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridy = 0;
-        c.gridx = 0;
-        panelNorth.add(lineNumbering, c);
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.gridx = 1;
-        c.weightx = 1;
-        panelNorth.add(textArea, c);
-        panelLeft.add(panelNorth, BorderLayout.NORTH);
-        
-        add(scrollPane);
-    }
-
-
-    //call this method, to update the values
-    private void reDrawLeftIcons() {
-        lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 3));
-
-        for(int lineNo=1; lineNo <= numberOfLines; ++lineNo) {
-            JLabel lab = (JLabel) lineNumbering.getComponent(3*(lineNo-1));
-
-            if (errorLineList.contains(lineNo)){
-                if (Regs[REG_BZ] == lineNo) {
-                    lab.setIcon(ARROW_ERROR);
-                } else {
-                    lab.setIcon(ERROR);
-                }
-            } else {
-                if (Regs[REG_BZ] == lineNo) {
-                    lab.setIcon(ARROW);
-                } else {
-                    lab.setIcon(EMPTY);
-                }
-            }
         }
     }
 
@@ -616,9 +627,6 @@ public class Vam extends JFrame{
 
         Regs[REG_BZ] = 1;
         processing = true;
-
-        if (panelRight == null) rightPanel();
-        if (panelLeft == null) addleftPanel();
 
         reDrawRightPanel();
         reDrawLeftIcons();
