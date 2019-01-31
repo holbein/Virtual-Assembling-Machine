@@ -57,7 +57,7 @@ public class Vam extends JFrame{
 
     HashSet<Integer> errorLineList = new HashSet<Integer>(); //List of lines with errors
 
-    private JFrame processFrame;
+    private JFrame processFrame = new JFrame("Table of Processes");
     private JTable processTable;
 
     private boolean processing = false;
@@ -268,7 +268,7 @@ public class Vam extends JFrame{
         
         edit.addSeparator();
         
-        JMenu subMenu = new JMenu("Nuber of Bits");
+        JMenu subMenu = new JMenu("Number of Bits");
         
         for (JRadioButton rb : bit_buttons) {
             buttonGroup.add(rb);
@@ -278,10 +278,10 @@ public class Vam extends JFrame{
         
         edit.add(subMenu);
 
-        JMenuItem showTable = new JMenuItem(new AbstractAction ("Show Table"){
+        JMenuItem showTable = new JMenuItem(new AbstractAction ("Show Table", new ImageIcon(Vam.class.getResource("resources/table.png"))){
             @Override
             public void actionPerformed (ActionEvent e){
-                updateProcessTableStatus();
+                addProcessTable();
             }
         });
         
@@ -451,9 +451,8 @@ public class Vam extends JFrame{
         reDrawRightPanel();
     }
 
-    private void updateProcessTableStatus() {        
-        if (processFrame == null || !processFrame.isVisible()) {
-            processFrame = new JFrame("Table of Processes");
+    private void addProcessTable() {        
+        if (!processFrame.isVisible()) {
             processFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
             processFrame.setSize(700, 400);
             processFrame.setIconImages(holbeinLogos);
@@ -471,7 +470,7 @@ public class Vam extends JFrame{
             JScrollPane scrollProc = new JScrollPane(processTable);
             processTable.setFillsViewportHeight(true);
             processTable.getColumnModel().getColumn(0).setPreferredWidth(250);
-            //Use if you want to disable being able moving the columns:  processingTable.getTableHeader().setReorderingAllowed(false);
+            processTable.getTableHeader().setReorderingAllowed(false);
 
             DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
             rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
@@ -486,6 +485,8 @@ public class Vam extends JFrame{
     }
 
     private void printLine(int line) {
+        if (assemblyLabels.containsValue(line)) return;
+        
         String[] row = new String[Regs.length+1];
         row[0] = line+": "+getLineNoComment(getTextInLine(line));
         row[1] = ""+Regs[REG_SR];
@@ -495,9 +496,6 @@ public class Vam extends JFrame{
         }
         
         ((DefaultTableModel)processTable.getModel()).addRow(row);
-        if (!processFrame.isVisible()){
-            processFrame.setVisible(true);
-        }
     }
 
     /**
@@ -680,7 +678,7 @@ public class Vam extends JFrame{
         scanForLabels();
 
         if (processing && 0 < Regs[REG_BZ] && Regs[REG_BZ] <= textArea.getLineCount()) {
-            if (processFrame != null && processFrame.isVisible()){
+            if (processFrame.isVisible()){
                 int holdLine = Regs[REG_BZ];
                 check(getTextInLine(Regs[REG_BZ]));
                 printLine(holdLine);
@@ -697,7 +695,7 @@ public class Vam extends JFrame{
         scanForLabels();
 
         while (processing && 0 < Regs[REG_BZ] && Regs[REG_BZ] <= textArea.getLineCount()) {
-            if (processFrame != null && processFrame.isVisible()){
+            if (processFrame.isVisible()){
                 int holdLine = Regs[REG_BZ];
                 check(getTextInLine(Regs[REG_BZ]));
                 printLine(holdLine);
