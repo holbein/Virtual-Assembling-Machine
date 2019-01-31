@@ -45,7 +45,7 @@ import javax.swing.table.DefaultTableModel;
 public class Vam extends JFrame{
     private static final String version = "1.2.0";
 
-    private static final int FRAME_WIDTH = 800;
+    private static final int FRAME_WIDTH = 810;
     private static final int FRAME_HEIGHT = 600;
 
     HashSet<Integer> errorLineList = new HashSet<Integer>(); //List of lines with errors
