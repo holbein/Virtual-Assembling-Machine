@@ -50,14 +50,22 @@ import javax.swing.undo.UndoManager;
  */
 @SuppressWarnings("serial")
 public class Vam extends JFrame{
-    private static final String version = "1.2.1";
+    /**
+     * Version of the Virtual Assembly Machine.
+     */
+    private static final String VERSION = "1.2.1";
 
-    private static final int FRAME_WIDTH = 810;
-    private static final int FRAME_HEIGHT = 600;
+    /**
+     * Width and Height of the JFrame of {@link Vam}.
+     */
+    private static final int FRAME_WIDTH = 810, FRAME_HEIGHT = 600;
 
-    HashSet<Integer> errorLineList = new HashSet<Integer>(); //List of lines with errors
+    /**
+     * {@link HashSet} of lines with errors in them.
+     */
+    HashSet<Integer> errorLineList = new HashSet<Integer>();
 
-    private JFrame processFrame = new JFrame("Table of Processes");
+    private final JFrame processFrame = new JFrame("Table of Processes");
     private JTable processTable;
 
     private boolean processing = false;
@@ -95,12 +103,13 @@ public class Vam extends JFrame{
     private final JPanel errorPanel = new JPanel();
     private final JScrollPane errorScroll = new JScrollPane(errorPanel);
 
-    // File menu items
+    /**
+     * {@link JMenuItem JMenuItems} that are in the {@link JMenu} "File", that is in the {@link JMenuBar} created in {@link #setMenu()}.
+     */
     private JMenuItem save, saveAs, open, quit;
+    JMenuItem undo;
+    private JMenuItem redo;
 
-	JMenuItem undo;
-
-	private JMenuItem redo;
     private String path = "";
 
     private RegisterWidth.Handler widthHandler = null;
@@ -123,7 +132,7 @@ public class Vam extends JFrame{
         setMinimumSize(new Dimension(500, 385));
         setLocationRelativeTo(null);
         setLayout(new GridLayout(1, 2));
-        setTitle("Virtual Assembling Machine v." + version);
+        setTitle("Virtual Assembling Machine v." + VERSION);
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new MyWindowListener(this));
 
@@ -307,6 +316,9 @@ public class Vam extends JFrame{
         setJMenuBar(mbar);
     }
 
+    /**
+     * Is called when the {@link JMenuItem} {@link saveAs} is pressed.
+     */
     private void saveAs() {
         JFileChooser choose = new JFileChooser();
         choose.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -332,6 +344,9 @@ public class Vam extends JFrame{
         }
     }
 
+    /**
+     * Is called when the {@link JMenuItem} {@link save} is pressed.
+     */
     private void save() {
         if (!path.equals("")) {
             File out = new File(path);
@@ -348,6 +363,9 @@ public class Vam extends JFrame{
         }
     }
 
+    /**
+     * Is called when the {@link JMenuItem} {@link open} is pressed.
+     */
     private void open() {
         JFileChooser choose = new JFileChooser();
         choose.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -362,6 +380,10 @@ public class Vam extends JFrame{
         }
     }
 
+    /**
+     * Is called in {@link open()}.
+     * @param file that should be opened.
+     */
     public void openFile(File file) {
         path = file.getAbsolutePath();
         save.setEnabled(true);
@@ -427,7 +449,7 @@ public class Vam extends JFrame{
 
     /**
      * Changes the register width saved in {@link widthHandler} to the selected width.
-     * @param handler Object, who's instance implements {@link RegisterWidth.Handler} and represents the new register width.
+     * @param handler object, who's instance implements {@link RegisterWidth.Handler} and represents the new register width.
      */
     private void changeRegisterWidth(RegisterWidth.Handler handler) {
         widthHandler = handler;
@@ -451,6 +473,9 @@ public class Vam extends JFrame{
         reDrawRightPanel();
     }
 
+    /**
+     * Adds a process Table, when called by the {@link JMenuItem}, by setting {@link processFrame} visible and adding {@link processTable} to it.
+     */
     private void addProcessTable() {        
         if (!processFrame.isVisible()) {
             processFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -484,8 +509,16 @@ public class Vam extends JFrame{
         }        
     }
 
+    /**
+     * Adds a line to the {@link processTable} in the {@link processFrame} with the values of the various {@link Regs Registers}.
+     * @param line that the command is in in the editor (corresponds to the {@link lineNumbering} on the left side of the {@link textArea}).
+     */
     private void printLine(int line) {
-        if (assemblyLabels.containsValue(line)) return;
+        if (assemblyLabels.containsValue(line)
+            || getLineNoComment(getTextInLine(line)).equals("")
+            || getLineNoComment(getTextInLine(line)).substring(0, 2).equals("--")) {
+            return;
+        }
         
         String[] row = new String[Regs.length+1];
         row[0] = line+": "+getLineNoComment(getTextInLine(line));
@@ -499,7 +532,7 @@ public class Vam extends JFrame{
     }
 
     /**
-     * Initializes the left panel including adding it to the {@link JFrame}.
+     * Initializes the left panel including adding it to the {@link JFrame} of {@link Vam}.
      */
     private void addleftPanel() {
         panelLeft = new JPanel(new BorderLayout());
@@ -529,7 +562,7 @@ public class Vam extends JFrame{
 
 
     /**
-     * Is called to refresh the icons left of the line numbering.
+     * Updates the icons left of the line numbering, that are in the {@link JPanel} {@link lineNumbering}.
      */
     private void reDrawLeftIcons() {
         lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 3));
@@ -553,6 +586,9 @@ public class Vam extends JFrame{
         }
     }
 
+    /**
+     * Initializes the right panel including adding it to the {@link JFrame} of {@link Vam}.
+     */
     private void addRightPanel() {
         panelRight = new JPanel(new GridBagLayout());
 
@@ -619,7 +655,9 @@ public class Vam extends JFrame{
         add(panelRight);
     }
 
-    //call this method, to update the values
+    /**
+     * Updates the values of the {@link Regs Registers} displayed on {@link panelRight}, by changing the Text of the corresponding {@link labels labels[][]}.
+     */
     private void reDrawRightPanel() {
         labels[1][0].setText(toBitString(Regs[REG_SR]));
         labels[2][0].setText(Integer.toString(Regs[REG_SR]));
@@ -631,8 +669,11 @@ public class Vam extends JFrame{
         }
     }
 
-    // line is the same number as the numbering of the lines on the left side
-    // find the corresponding text line from textArea
+    /**
+     * Gets the text of one line in the {@link textArea}, that the user has put in.
+     * @param line corresponding to the {@link lineNumbering} on the left side of the {@link textArea}.
+     * @return full {@link String} of that line. (Use {@link getLineNoComment(String)} to remove potential comments and to trim leading or trailing spaces)
+     */
     private String getTextInLine(int line) {
         String text = textArea.getText();
 
