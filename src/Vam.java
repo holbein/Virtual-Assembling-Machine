@@ -203,7 +203,7 @@ public class Vam extends JFrame{
         file.add(quit);
 
         save.setAccelerator(KeyStroke.getKeyStroke("control S")); //shortcut ctrl+s
-        saveAs.setAccelerator(KeyStroke.getKeyStroke("control shift S"));
+        saveAs.setAccelerator(KeyStroke.getKeyStroke("control shift S")); //shortcut ctrl+shift+s
         open.setAccelerator(KeyStroke.getKeyStroke("control O")); //shortcut ctrl+o
         quit.setAccelerator(KeyStroke.getKeyStroke("control Q")); //shortcut ctrl+q
 
@@ -292,7 +292,7 @@ public class Vam extends JFrame{
             }
         });
         editFlash.setSelected(true); //default true --> flashing if not used
-        editFlash.setAccelerator(KeyStroke.getKeyStroke("control alt N")); //shortcut ctrl+alt+N
+        editFlash.setAccelerator(KeyStroke.getKeyStroke("control alt F")); //shortcut ctrl+alt+F
         
 
         JMenu view = new JMenu("View");
