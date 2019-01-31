@@ -1,5 +1,7 @@
 
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -40,10 +42,16 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-
+/**
+ * This class is the main class and when it is executed through {@link #main(String[])} the Virtual Assembling Machine starts running.
+ * The classes {@link MyDocumentListener}, {@link MyWindowListener} and {@link RegisterWidth} are also used.
+ * @author VictorOle
+ * @author SBester001
+ * @version 1.2.1
+ */
 @SuppressWarnings("serial")
 public class Vam extends JFrame{
-    private static final String version = "1.2.0";
+    private static final String version = "1.2.1";
 
     private static final int FRAME_WIDTH = 810;
     private static final int FRAME_HEIGHT = 600;
@@ -67,21 +75,20 @@ public class Vam extends JFrame{
 
     final List <Image> holbeinLogos = new ArrayList<Image>(5);
 
-    private HashMap<String, Integer> assemblyLabels = new HashMap<String, Integer>();
+    private final HashMap<String, Integer> assemblyLabels = new HashMap<String, Integer>();
 
     int numberOfLines = 1; //do not change this value here
 
     private JPanel panelLeft;
-    private JScrollPane scrollPane;
     JPanel lineNumbering = new JPanel();
     static final ImageIcon EMPTY = new ImageIcon(Vam.class.getResource("resources/empty_16x12.png"));
     static final ImageIcon ARROW = new ImageIcon(Vam.class.getResource("resources/arrow_16x12.png"));
     static final ImageIcon ERROR = new ImageIcon(Vam.class.getResource("resources/error_16x15.png"));
     static final ImageIcon ARROW_ERROR = new ImageIcon(Vam.class.getResource("resources/arrow_error_16x15.png"));
-    JTextArea textArea = new JTextArea(numberOfLines, 30);
+    JTextArea textArea = new JTextArea(numberOfLines, 1);
 
     private JPanel panelRight;
-    private JLabel[][] labels = new JLabel[3][19];
+    private final JLabel[][] labels = new JLabel[3][19];
     private JButton start, oneStep, reset;
 
     private JFrame errorFrame; //small JFrame with error message, that pops up when there was an error
@@ -92,85 +99,24 @@ public class Vam extends JFrame{
     private JMenuItem save, saveAs, open, quit;
     private String path = "";
 
-    public static String byteToString(int value) {
-        return String.format("%8s", Integer.toBinaryString(value & 0xFF)).replace(' ', '0');
-    }
-
-    public interface registerWidth {
-        public int width();
-
-        // Check for overflow
-        boolean isOverflow (int value);
-
-        public int cast(int value);
-
-        public String toBinaryString(int value);
-    };
-
-    public class int8Width implements registerWidth {
-        public int width() { return 8; }
-
-        public boolean isOverflow (int value) {
-            return (value < Byte.MIN_VALUE || Byte.MAX_VALUE < value);
-        }
-
-        public int cast (int value) { return (byte) value; }
-
-        public String toBinaryString(int value) {
-            return byteToString(value & 0xFF);
-        }
-    };
-
-    public class int16Width implements registerWidth {
-        public int width() { return 16; }
-
-        public boolean isOverflow (int value) {
-            return (value < Short.MIN_VALUE || Short.MAX_VALUE < value);
-        }
-
-        public int cast(int value) { return (short) value; }
-
-        public String toBinaryString(int value) {
-            return String.join(" ",
-                byteToString(((value & 0xFF00) >> 8) & 0xFF),
-                byteToString(((value & 0x00FF) & 0xFF))
-            );
-        }
-    };
-
-    public class int32Width implements registerWidth {
-        public int width() { return 32; }
-
-        public boolean isOverflow (int value) {
-            // Really?
-            return (value < Integer.MIN_VALUE || Integer.MAX_VALUE < value);
-        }
-
-        public int cast(int value) { return value; }
-
-        public String toBinaryString(int value) {
-            return String.join(" ",
-                byteToString(((value & 0xFF000000) >> 24) & 0xFF),
-                byteToString(((value & 0x00FF0000) >> 16) & 0xFF),
-                byteToString(((value & 0xFF00) >> 8) & 0xFF),
-                byteToString(((value & 0x00FF) & 0xFF))
-            );
-        }
-    };
-
-    private registerWidth widthHandler_ = null;
+    private RegisterWidth.Handler widthHandler = null;
 
     // Forwards
-    private registerWidth widthHandler() {
-        if (widthHandler_ == null) widthHandler_ = new int8Width();
-        return widthHandler_;
+    private RegisterWidth.Handler widthHandler() {
+        if (widthHandler == null) widthHandler = new RegisterWidth.int8Width();
+        return widthHandler;
     }
+
     private boolean isOverflow (int value) { return widthHandler().isOverflow(value); }
     private int cast (int value) { return widthHandler().cast(value); }
+    private String toBitString(int value) { return widthHandler().toBinaryString(value); }
 
-
+    /**
+     * Constructs a new Virtual Assembly Machine.
+     */
     Vam() {
         setSize(FRAME_WIDTH, FRAME_HEIGHT);
+        setMinimumSize(new Dimension(500, 385));
         setLocationRelativeTo(null);
         setLayout(new GridLayout(1, 2));
         setTitle("Virtual Assembling Machine v." + version);
@@ -184,12 +130,13 @@ public class Vam extends JFrame{
         holbeinLogos.add(new ImageIcon(Vam.class.getResource("resources/Holbein_Logo_8x8.png")).getImage());
         setIconImages(holbeinLogos);
 
+        addleftPanel();
+        addRightPanel();
+
         reset();
 
         setMenu();
 
-        add(scrollPane);
-        add(panelRight);
         setVisible(true);
 
         textArea.addInputMethodListener(new InputMethodListener() {
@@ -217,6 +164,9 @@ public class Vam extends JFrame{
 
     }
 
+    /**
+     * Sets the {@link JMenuBar} at the top of the JFrame of {@link Vam}.
+     */
     @SuppressWarnings("deprecation")
     private void setMenu() {
         JMenu file = new JMenu("File");
@@ -253,7 +203,7 @@ public class Vam extends JFrame{
                 new AbstractAction("Quit", new ImageIcon(Vam.class.getResource("resources/cancel.png"))) {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        dispose();
+                        askSave();
                     }
                 });
         file.add(quit);
@@ -268,19 +218,19 @@ public class Vam extends JFrame{
             new JRadioButton(new AbstractAction ("Use 8 Bits"){
                 @Override
                 public void actionPerformed (ActionEvent e){
-                    changeRegisterWidth(new int8Width());
+                    changeRegisterWidth(new RegisterWidth.int8Width());
                 }
             }),
             new JRadioButton(new AbstractAction ("Use 16 Bits"){
                 @Override
                 public void actionPerformed (ActionEvent e){
-                    changeRegisterWidth(new int16Width());
+                    changeRegisterWidth(new RegisterWidth.int16Width());
                 }
             }),
             new JRadioButton(new AbstractAction ("Use 32 Bits"){
                 @Override
                 public void actionPerformed (ActionEvent e){
-                    changeRegisterWidth(new int32Width());
+                    changeRegisterWidth(new RegisterWidth.int32Width());
                 }
             })
         };
@@ -429,8 +379,12 @@ public class Vam extends JFrame{
         }
     }
 
-    private void changeRegisterWidth(registerWidth handler) {
-        widthHandler_ = handler;
+    /**
+     * Changes the register width saved in {@link widthHandler} to the selected width.
+     * @param handler Object, who's instance implements {@link RegisterWidth.Handler} and represents the new register width.
+     */
+    private void changeRegisterWidth(RegisterWidth.Handler handler) {
+        widthHandler = handler;
         if (isOverflow(Regs[REG_A])) {
             error("Overflow in A!");
         }
@@ -472,7 +426,7 @@ public class Vam extends JFrame{
                 JScrollPane scrollProc = new JScrollPane(processTable);
                 processTable.setFillsViewportHeight(true);
                 processTable.getColumnModel().getColumn(0).setPreferredWidth(250);
-                //Use if you want to disable beeing able moving the columns:  processingTable.getTableHeader().setReorderingAllowed(false);
+                //Use if you want to disable being able moving the columns:  processingTable.getTableHeader().setReorderingAllowed(false);
 
                 DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
                 rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
@@ -489,7 +443,7 @@ public class Vam extends JFrame{
 
     private void printLine(int line) {
         String[] row = new String[Regs.length+1];
-        row[0] = getLineNoComment(line+": "+getTextInLine(line));
+        row[0] = line+": "+getLineNoComment(getTextInLine(line));
         row[1] = ""+Regs[REG_SR];
         row[2] = ""+Regs[REG_BZ];
         for (int i=0; i<=NREGS; i++) {
@@ -502,10 +456,63 @@ public class Vam extends JFrame{
         }
     }
 
-    private void rightPanel() {
-        panelRight = new JPanel();
-        panelRight.setLayout(new GridBagLayout());
+    /**
+     * Initializes the left panel including adding it to the {@link JFrame}.
+     */
+    private void addleftPanel() {
+        panelLeft = new JPanel(new BorderLayout());
+        JScrollPane scrollPane = new JScrollPane(panelLeft);
+
+        textArea.getDocument().addDocumentListener(new MyDocumentListener(this));
+        scrollPane.getVerticalScrollBar().setUnitIncrement(10); //sets the scroll-speed
+
+        lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 3));
+        lineNumbering.add(new JLabel(EMPTY));
+        lineNumbering.add(new JLabel(String.valueOf(numberOfLines)+"  "));
+        lineNumbering.add(new JLabel(":"));
+
+        JPanel panelNorth = new JPanel(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
+        c.gridy = 0;
+        c.gridx = 0;
+        panelNorth.add(lineNumbering, c);
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 1;
+        c.weightx = 1;
+        panelNorth.add(textArea, c);
+        panelLeft.add(panelNorth, BorderLayout.NORTH);
+
+        add(scrollPane);
+    }
+
+
+    /**
+     * Is called to refresh the icons left of the line numbering.
+     */
+    private void reDrawLeftIcons() {
+        lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 3));
+
+        for(int lineNo=1; lineNo <= numberOfLines; ++lineNo) {
+            JLabel lab = (JLabel) lineNumbering.getComponent(3*(lineNo-1));
+
+            if (errorLineList.contains(lineNo)){
+                if (Regs[REG_BZ] == lineNo) {
+                    lab.setIcon(ARROW_ERROR);
+                } else {
+                    lab.setIcon(ERROR);
+                }
+            } else {
+                if (Regs[REG_BZ] == lineNo) {
+                    lab.setIcon(ARROW);
+                } else {
+                    lab.setIcon(EMPTY);
+                }
+            }
+        }
+    }
+
+    private void addRightPanel() {
+        panelRight = new JPanel(new GridBagLayout());
 
         labels[0][0] = new JLabel("SR", SwingConstants.CENTER);
         labels[0][1] = new JLabel("BZ", SwingConstants.CENTER);
@@ -515,7 +522,7 @@ public class Vam extends JFrame{
             labels[0][i+2] = new JLabel("R"+(i), SwingConstants.CENTER);
         }
 
-        String binaryZeros = widthHandler().toBinaryString(0);
+        String binaryZeros = toBitString(0);
 
         for(int i=0; i < Regs.length; i++) {
             labels[1][i] = new JLabel(binaryZeros, SwingConstants.CENTER);
@@ -526,6 +533,7 @@ public class Vam extends JFrame{
             labels[2][i].setBorder(BorderFactory.createLineBorder(Color.BLACK));
         }
 
+        GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.BOTH;
         c.weighty = 1;
         for(int i=0; i < Regs.length; i++) {
@@ -565,11 +573,13 @@ public class Vam extends JFrame{
         panelRight.add(oneStep, c);
         c.gridx = 2;
         panelRight.add(reset, c);
+
+        add(panelRight);
     }
 
     //call this method, to update the values
     private void reDrawRightPanel() {
-        labels[1][0].setText(widthHandler().toBinaryString(Regs[REG_SR]));
+        labels[1][0].setText(toBitString(Regs[REG_SR]));
         labels[2][0].setText(Integer.toString(Regs[REG_SR]));
         labels[1][1].setText(widthHandler().toBinaryString(Regs[REG_BZ]));
         labels[2][1].setText(Integer.toString(Regs[REG_BZ]));
@@ -578,92 +588,6 @@ public class Vam extends JFrame{
             labels[2][i+2].setText(Integer.toString(Regs[i]));
         }
     }
-
-    private void leftPanel() {
-        panelLeft = new JPanel();
-        scrollPane = new JScrollPane(panelLeft);
-
-        textArea.getDocument().addDocumentListener(new MyDocumentListener(this));
-        scrollPane.getVerticalScrollBar().setUnitIncrement(10); //sets the scroll-speed
-
-        lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 3));
-        lineNumbering.add(new JLabel(EMPTY));
-        lineNumbering.add(new JLabel(String.valueOf(numberOfLines)+"  "));
-        lineNumbering.add(new JLabel(":"));
-
-        panelLeft.add(lineNumbering);
-        panelLeft.add(textArea);
-    }
-
-
-    //call this method, to update the values
-    private void reDrawLeftIcons() {
-        lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 3));
-
-        for(int lineNo=1; lineNo <= numberOfLines; ++lineNo) {
-            if (errorLineList.contains(lineNo)){
-                if (Regs[REG_BZ] == lineNo) {
-                    ((JLabel)lineNumbering.getComponent(3*(lineNo-1))).setIcon(ARROW_ERROR);
-                } else {
-                    ((JLabel)lineNumbering.getComponent(3*(lineNo-1))).setIcon(ERROR);
-                }
-            } else {
-                if (Regs[REG_BZ] == lineNo) {
-                    ((JLabel)lineNumbering.getComponent(3*(lineNo-1))).setIcon(ARROW);
-                } else {
-                    ((JLabel)lineNumbering.getComponent(3*(lineNo-1))).setIcon(EMPTY);
-                }
-            }
-        }
-    }
-
-    /*class MyDocumentListener implements DocumentListener {
-        final String newline = "\n";
-
-        public void insertUpdate(DocumentEvent e) {
-            lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 3));
-            while (numberOfLines < textArea.getLineCount()) {
-                numberOfLines++;
-
-                if (errorLineList.contains(numberOfLines)){
-                    if (Regs[REG_BZ] == numberOfLines+1) {
-                        lineNumbering.add(new JLabel(ARROW_ERROR));
-                    } else {
-                        lineNumbering.add(new JLabel(ERROR));
-                    }
-                } else {
-                    if (Regs[REG_BZ] == numberOfLines+1) {
-                        lineNumbering.add(new JLabel(ARROW));
-                    } else {
-                        lineNumbering.add(new JLabel(EMPTY));
-                    }
-                }
-
-                if (numberOfLines<10) {
-                    lineNumbering.add(new JLabel(String.valueOf(numberOfLines)+"  "));
-                } else {
-                    lineNumbering.add(new JLabel(String.valueOf(numberOfLines)));
-                }
-                lineNumbering.add(new JLabel(":"));
-            }
-            textChanged = true;
-        }
-
-        public void removeUpdate(DocumentEvent e) {
-            lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 3));
-            while (textArea.getLineCount() < numberOfLines) {
-                lineNumbering.remove(lineNumbering.getComponentCount()-1);
-                lineNumbering.remove(lineNumbering.getComponentCount()-1);
-                lineNumbering.remove(lineNumbering.getComponentCount()-1);
-                numberOfLines--;
-            }
-            textChanged = true;
-        }
-
-        public void changedUpdate(DocumentEvent e) {
-            textChanged = true;
-        }
-    }*/
 
     // line is the same number as the numbering of the lines on the left side
     // find the corresponding text line from textArea
@@ -690,8 +614,11 @@ public class Vam extends JFrame{
         errorLineList.clear();
         errorPanel.removeAll();
         assemblyLabels.clear();
-        while (processTable != null && 1 < ((DefaultTableModel)processTable.getModel()).getRowCount()){
-            ((DefaultTableModel)processTable.getModel()).removeRow(1);
+        if(processTable != null){
+            DefaultTableModel model = (DefaultTableModel)processTable.getModel();
+            while (1 < model.getRowCount()){
+                model.removeRow(1);
+            }
         }
 
         for (int i=0; i<Regs.length; i++) {
@@ -700,9 +627,6 @@ public class Vam extends JFrame{
 
         Regs[REG_BZ] = 1;
         processing = true;
-
-        if (panelRight == null) rightPanel();
-        if (panelLeft == null) leftPanel();
 
         reDrawRightPanel();
         reDrawLeftIcons();
@@ -744,8 +668,8 @@ public class Vam extends JFrame{
 
     /**
      * " JUMP  4   --jumps back to line 4" --> "JUMP  4"
-     * @param input full {@link java.lang.String String} of the line
-     * @return String with the comment removed that is then trimmed
+     * @param input full {@link String} of the line
+     * @return {@link String} with the comment removed that is then trimmed
      */
     private String getLineNoComment(String input) {
         // Strip out (trailing) comments of the form " --..."
@@ -784,8 +708,8 @@ public class Vam extends JFrame{
         int value = -1;
         try {
             value = Integer.parseInt(arg);
-        } catch (NumberFormatException ex) {
-            if (command.charAt(0) != 'J' || (value = getAssemblyLabelLine(arg)) <= 0) {
+        } catch (NumberFormatException e) {
+            if (command.charAt(0) != 'J' || (value = getAssemblyLabelLine(arg)+1) <= 0) {
                 error("Number format exception: \""+ input + "\" in line: "+Regs[REG_BZ]);
                 return;
             }
@@ -798,7 +722,7 @@ public class Vam extends JFrame{
             return;
         } catch (NoSuchMethodException e) {
             def(input);
-        } catch (Exception ex) {
+        } catch (Exception e) {
             error("Something else bad happened: " + input);
         }
     }
@@ -883,7 +807,6 @@ public class Vam extends JFrame{
                 if (val == -1) {
                     // Not previously there
                     assemblyLabels.put(tag, lineNo);
-                    //System.out.println(assemblyLabels.toString());
                 } else {
                     labelError("Label: \""+tag+":\", used in lines "+ val+" and "+lineNo+", is only allowed to be used once!", val, lineNo);
                 }
@@ -901,17 +824,20 @@ public class Vam extends JFrame{
         return (assemblyLabels.containsKey(tag) ? assemblyLabels.get(tag) : -1);
     }
 
-    public void machine_END(int unused) {
-        processing = false;
-        Regs[REG_BZ]++;
+    public boolean isBadRegister(int register) {
+        boolean bad = (register <= 0 || register >= NREGS);
+        if (bad) {
+            error(register+" in line: "+Regs[REG_BZ]+" is an invalid register!");
+        }
+        return bad;
     }
 
     private void setSignStatus(int value){
-        Regs[REG_SR] = 0; //clear all bits
+        Regs[REG_SR] = 0; // clear all bits
         if (value > 0) {
-            Regs[REG_SR] |= 0b10; //set second last bit to 1
+            Regs[REG_SR] |= 0b10; // set second last bit to 1
         } else if (value < 0) {
-            Regs[REG_SR] |= 0b01;//set last bit to 1
+            Regs[REG_SR] |= 0b01;// set last bit to 1
         }
     }
 
@@ -927,6 +853,32 @@ public class Vam extends JFrame{
         Regs[REG_A] = cast(value);
     }
 
+    public void machine_LOAD(int register) {
+        if (isBadRegister(register)) return;
+
+        Regs[REG_A] = Regs[register];
+
+        setSignStatus(Regs[REG_A]);
+        Regs[REG_BZ]++;
+    }
+
+    public void machine_DLOAD(int number) {
+        if (isOverflow(number)) {
+            error(number+" in line: "+Regs[REG_BZ]+" is a too big number");
+            return;
+        }
+        setSignStatus(number);
+        Regs[REG_A] = number;
+        Regs[REG_BZ]++;
+    }
+
+    public void machine_STORE(int register) {
+        if (isBadRegister(register)) return;
+
+        Regs[register] = Regs[REG_A];
+        Regs[REG_BZ]++;
+    }
+
     public void machine_ADD(int register) {
         if (isBadRegister(register)) return;
 
@@ -937,13 +889,33 @@ public class Vam extends JFrame{
 
     }
 
-    public void machine_DLOAD(int number) {
-        if (isOverflow(number)) {
-            error(number+" in line: "+Regs[REG_BZ]+" is a too big number");
+    public void machine_SUB(int register) {
+        if (isBadRegister(register)) return;
+
+        int temp = -1;
+        try {
+            temp = Regs[REG_A] - Regs[register];
+        } catch(Exception e) {
+            error(register+" in line: "+Regs[REG_BZ]+" is not a valid register!");
             return;
         }
-        setSignStatus(number);
-        Regs[REG_A] = number;
+
+        safeNumberCast(temp);
+        Regs[REG_BZ]++;
+    }
+
+    public void machine_MULT(int register) {
+        if (isBadRegister(register)) return;
+
+        int temp = -1;
+        try {
+            temp = Regs[REG_A] * Regs[register];
+        }catch(Exception e) {
+            def(""+register);
+            return;
+        }
+
+        safeNumberCast(temp);
         Regs[REG_BZ]++;
     }
 
@@ -960,6 +932,15 @@ public class Vam extends JFrame{
 
         safeNumberCast(temp);
         Regs[REG_BZ]++;
+    }
+
+    public void machine_JUMP(int line) {
+        if (isOverflow(line)) {
+            error("invalid line number: " + line);
+            return;
+        }
+
+        Regs[REG_BZ] = line;
     }
 
     public void machine_JEQ(int line) {
@@ -1016,71 +997,8 @@ public class Vam extends JFrame{
         }
     }
 
-    public void machine_JUMP(int line) {
-        if (isOverflow(line)) {
-            error("invalid line number: " + line);
-            return;
-        }
-
-        Regs[REG_BZ] = line;
-    }
-
-    public void machine_LOAD(int register) {
-        if (isBadRegister(register)) return;
-
-        Regs[REG_A] = Regs[register];
-
-        setSignStatus(Regs[REG_A]);
-        Regs[REG_BZ]++;
-    }
-
-    public void machine_MULT(int register) {
-        if (isBadRegister(register)) return;
-
-        int temp = -1;
-        try {
-            temp = Regs[REG_A] * Regs[register];
-        }catch(Exception e) {
-            def(""+register);
-            return;
-        }
-
-        safeNumberCast(temp);
-        Regs[REG_BZ]++;
-    }
-
-
-    public boolean isBadRegister(int register) {
-        boolean bad = (register <= 0 || register >= NREGS);
-        if (bad) {
-            error(register+" in line: "+Regs[REG_BZ]+" is an invalid register!");
-        }
-        return bad;
-    }
-
-    public void machine_STORE(int register) {
-        if (isBadRegister(register)) return;
-
-        Regs[register] = Regs[REG_A];
-        Regs[REG_BZ]++;
-    }
-
-    public void machine_SUB(int register) {
-        processing = (register >= 0 && register <= NREGS);
-        if (!processing) {
-            error(register+" in line: "+Regs[REG_BZ]+" is not a valid register!");
-            return;
-        }
-
-        int temp = -1;
-        try {
-            temp = Regs[REG_A] - Regs[register];
-        } catch(Exception e) {
-            error(register+" in line: "+Regs[REG_BZ]+" is not a valid register!");
-            return;
-        }
-
-        safeNumberCast(temp);
+    public void machine_END(int unused) {
+        processing = false;
         Regs[REG_BZ]++;
     }
 }
