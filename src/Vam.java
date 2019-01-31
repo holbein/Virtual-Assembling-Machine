@@ -41,6 +41,7 @@ import javax.swing.SwingConstants;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.undo.UndoManager;
 
 /**
  * This class is the main class and when it is executed through {@link #main(String[])} the Virtual Assembling Machine starts running.
@@ -64,6 +65,7 @@ public class Vam extends JFrame{
 
     private boolean processing = false;
     boolean textChanged;
+    UndoManager undoManager = new UndoManager();
 
     static final int REG_SR = 17;
     static final int REG_BZ = 16;
@@ -97,6 +99,10 @@ public class Vam extends JFrame{
 
     // File menu items
     private JMenuItem save, saveAs, open, quit;
+
+	JMenuItem undo;
+
+	private JMenuItem redo;
     private String path = "";
 
     private RegisterWidth.Handler widthHandler = null;
@@ -138,17 +144,8 @@ public class Vam extends JFrame{
         setMenu();
 
         setVisible(true);
-
-        textArea.addInputMethodListener(new InputMethodListener() {
-            @Override
-            public void inputMethodTextChanged(InputMethodEvent event) {
-                textChanged = true;
-            }
-            @Override
-            public void caretPositionChanged(InputMethodEvent event) {
-                // TODO Auto-generated method stub
-            }
-        });
+        
+        textArea.getDocument().addUndoableEditListener(undoManager);
     }
 
     /**
@@ -167,7 +164,6 @@ public class Vam extends JFrame{
     /**
      * Sets the {@link JMenuBar} at the top of the JFrame of {@link Vam}.
      */
-    @SuppressWarnings("deprecation")
     private void setMenu() {
         JMenu file = new JMenu("File");
 
@@ -208,9 +204,10 @@ public class Vam extends JFrame{
                 });
         file.add(quit);
 
-        save.setAccelerator(KeyStroke.getKeyStroke('S', Toolkit.getDefaultToolkit ().getMenuShortcutKeyMask())); //shortcut ctrl+s
-        open.setAccelerator(KeyStroke.getKeyStroke('O', Toolkit.getDefaultToolkit ().getMenuShortcutKeyMask())); //shortcut ctrl+o
-        quit.setAccelerator(KeyStroke.getKeyStroke('Q', Toolkit.getDefaultToolkit ().getMenuShortcutKeyMask())); //shortcut ctrl+q
+        save.setAccelerator(KeyStroke.getKeyStroke("control S")); //shortcut ctrl+s
+        saveAs.setAccelerator(KeyStroke.getKeyStroke("control shift S"));
+        open.setAccelerator(KeyStroke.getKeyStroke("control O")); //shortcut ctrl+o
+        quit.setAccelerator(KeyStroke.getKeyStroke("control Q")); //shortcut ctrl+q
 
         ButtonGroup buttonGroup = new ButtonGroup();
 
@@ -234,14 +231,54 @@ public class Vam extends JFrame{
                 }
             })
         };
-
+        
+        
+        undo = new JMenuItem(
+                new AbstractAction("Undo", new ImageIcon(Vam.class.getResource("resources/arrow_undo.png"))) {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        undoManager.undo();
+                        redo.setEnabled(true);
+                        if(!undoManager.canUndo()) {
+                        	undo.setEnabled(false);
+                        }
+                    }
+                });
+        undo.setEnabled(false);
+        
+        redo = new JMenuItem(
+                new AbstractAction("Redo", new ImageIcon(Vam.class.getResource("resources/arrow_redo.png"))) {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        undoManager.redo();
+                        undo.setEnabled(true);
+                        if(!undoManager.canRedo()) {
+                        	redo.setEnabled(false);
+                        }
+                    }
+                });
+        
+        redo.setEnabled(false);
+        
+        undo.setAccelerator(KeyStroke.getKeyStroke("control Z")); //shortcut ctrl+z
+        redo.setAccelerator(KeyStroke.getKeyStroke("control Y")); //shortcut ctrl+y
 
         JMenu edit = new JMenu("Edit");
+        
+        edit.add(undo);
+        edit.add(redo);
+        
+        edit.addSeparator();
+        
+        JMenu subMenu = new JMenu("Nuber of Bits");
+        
         for (JRadioButton rb : bit_buttons) {
             buttonGroup.add(rb);
-            edit.add(rb);
+            subMenu.add(rb);
         }
         bit_buttons[0].setSelected(true); // default is 8-bit
+        
+        edit.add(subMenu);
 
         JRadioButton showTable = new JRadioButton(new AbstractAction ("Show Table"){
             @Override
@@ -338,7 +375,7 @@ public class Vam extends JFrame{
         if (textChanged) {
             JDialog saveDialog = new JDialog(this, "Save?");
             saveDialog.setIconImage(new ImageIcon(Vam.class.getResource("resources/disk.png")).getImage());
-            saveDialog.setSize(300, 100);
+            saveDialog.setSize(320, 100);
             saveDialog.setModal(true);
             saveDialog.setAlwaysOnTop(false);
             saveDialog.setLocationRelativeTo(this);

@@ -1,4 +1,5 @@
 import java.awt.GridLayout;
+import java.util.ArrayList;
 
 import javax.swing.JLabel;
 import javax.swing.event.DocumentEvent;
@@ -40,6 +41,7 @@ class MyDocumentListener implements DocumentListener {
             parent.lineNumbering.add(new JLabel(":"));
         }
         parent.textChanged = true;
+        parent.undo.setEnabled(parent.undoManager.canUndo());
     }
 
     public void removeUpdate(DocumentEvent e) {
@@ -51,9 +53,12 @@ class MyDocumentListener implements DocumentListener {
             parent.numberOfLines--;
         }
         parent.textChanged = true;
+        parent.undo.setEnabled(parent.undoManager.canUndo());
     }
 
     public void changedUpdate(DocumentEvent e) {
         parent.textChanged = true;
+        parent.undo.setEnabled(parent.undoManager.canUndo());
     }
+
 }
