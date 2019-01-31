@@ -6,6 +6,6 @@ bin/*
 VAM_program.txt
 *.class
 *.vam
-/nbproject/private/
+/nbproject/*
 /build/
 /dist/
