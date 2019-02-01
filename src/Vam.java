@@ -30,7 +30,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
@@ -73,12 +73,22 @@ public class Vam extends JFrame{
     UndoManager undoManager = new UndoManager();
     boolean flash = true;
 
-    static final int REG_SR = 17;
-    static final int REG_BZ = 16;
-    static final int REG_A = 0;
-    static final int NREGS = 15;
+    /**
+     * Position of the various registers in {@link Regs Regs[]}<p>
+     * <code>REG_A</code> position of A (Accumulator = R0).</p>
+     * <code>NREGS</code>  number of registers (excluding A = Accumulator = R0) (R1, R2, …,R15 --&gt; NREGS = 15).</p><p>
+     * <code>REG_BZ</code>  position of BZ (= command counter).</p><p>
+     * <code>REG_SR</code>  position of SR (= status register).<br>
+     * Note that if the corresponding bits are activated, that {@link Regs Regs[REG_A]} has the corresponding status.<br>
+     * 0b100 stand for an overflow.<br>
+     * 0b010 stand for {@link Regs Regs[REG_A]} &gt; 0<br>
+     * 0b001 stand for {@link Regs Regs[REG_A]} &lt; 0</p>
+     */
+    static final int REG_A = 0, NREGS = 15, REG_BZ = 16, REG_SR = 17;
 
-    //NB: fuer Regs[REG_SR] Aufbau: (0,0,0,0,0,Overflow,GreaterZero,SmallerZero)
+    /**
+     * Array of Registers.
+     */
     final int[] Regs = new int[18];
 
     final List <Image> holbeinLogos = new ArrayList<Image>(5);
@@ -129,7 +139,7 @@ public class Vam extends JFrame{
      */
     Vam() {
         setSize(FRAME_WIDTH, FRAME_HEIGHT);
-        setMinimumSize(new Dimension(500, 385));
+        setMinimumSize(new Dimension(420, 385));
         setLocationRelativeTo(null);
         setLayout(new GridLayout(1, 2));
         setTitle("Virtual Assembling Machine v." + VERSION);
@@ -185,7 +195,7 @@ public class Vam extends JFrame{
         file.add(save);
 
         saveAs = new JMenuItem(
-            new AbstractAction("Save As...", new ImageIcon(Vam.class.getResource("resources/disk_2.png"))) {
+            new AbstractAction("Save As…", new ImageIcon(Vam.class.getResource("resources/disk_2.png"))) {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     saveAs();
@@ -194,7 +204,7 @@ public class Vam extends JFrame{
         file.add(saveAs);
 
         open = new JMenuItem(
-                new AbstractAction("Open File..", new ImageIcon(Vam.class.getResource("resources/folder_explore.png"))) {
+                new AbstractAction("Open File…", new ImageIcon(Vam.class.getResource("resources/folder_explore.png"))) {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         open();
@@ -218,23 +228,26 @@ public class Vam extends JFrame{
 
         ButtonGroup buttonGroup = new ButtonGroup();
 
-        JRadioButton bit_buttons[] = {
-            new JRadioButton(new AbstractAction ("Use 8 Bits"){
+        JRadioButtonMenuItem bit_buttons[] = {
+            new JRadioButtonMenuItem(new AbstractAction ("Use 8 Bits"){
                 @Override
                 public void actionPerformed (ActionEvent e){
                     changeRegisterWidth(new RegisterWidth.int8Width());
+                    setMinimumSize(new Dimension(420, 385));
                 }
             }),
-            new JRadioButton(new AbstractAction ("Use 16 Bits"){
+            new JRadioButtonMenuItem(new AbstractAction ("Use 16 Bits"){
                 @Override
                 public void actionPerformed (ActionEvent e){
                     changeRegisterWidth(new RegisterWidth.int16Width());
+                    setMinimumSize(new Dimension(490, 385));
                 }
             }),
-            new JRadioButton(new AbstractAction ("Use 32 Bits"){
+            new JRadioButtonMenuItem(new AbstractAction ("Use 32 Bits"){
                 @Override
                 public void actionPerformed (ActionEvent e){
                     changeRegisterWidth(new RegisterWidth.int32Width());
+                    setMinimumSize(new Dimension(750, 385));
                 }
             })
         };
@@ -279,7 +292,7 @@ public class Vam extends JFrame{
         
         JMenu subMenu = new JMenu("Number of Bits");
         
-        for (JRadioButton rb : bit_buttons) {
+        for (JRadioButtonMenuItem rb : bit_buttons) {
             buttonGroup.add(rb);
             subMenu.add(rb);
         }
@@ -294,7 +307,7 @@ public class Vam extends JFrame{
             }
         });
         
-        JCheckBoxMenuItem editFlash = new JCheckBoxMenuItem(new AbstractAction ("Flash if not used"){
+        JCheckBoxMenuItem editFlash = new JCheckBoxMenuItem(new AbstractAction ("Flash if not used", new ImageIcon(Vam.class.getResource("resources/colouredImages/yellow_16x16.png"))){
             @Override
             public void actionPerformed (ActionEvent e){
                 flash = !flash;
@@ -402,6 +415,10 @@ public class Vam extends JFrame{
         }
     }
 
+    /**
+     * Is called when the {@link JMenuItem} {@link quit} is pressed or when the the {@link MyWindowListener} notices the {@link JFrame} of {@link Vam} being closed.<p>
+     * Opens a {@link JDialog}, asking the user, whether he wants to save the changes before exiting.</p>
+     */
     public void askSave() {
         if (textChanged) {
             JDialog saveDialog = new JDialog(this, "Save?");
@@ -693,6 +710,9 @@ public class Vam extends JFrame{
         return text.substring(beg, end);
     }
 
+    /**
+     * Resets the Assembly program to the initial state.
+     */
     private void reset() {
         errorLineList.clear();
         errorPanel.removeAll();
@@ -715,6 +735,10 @@ public class Vam extends JFrame{
         reDrawLeftIcons();
     }
 
+    /**
+     * Only runs the command in the line, that {@link Regs Regs[REGS_BZ]} is in.
+     * @see REG_BZ
+     */
     private void oneStep() {
         scanForLabels();
 
