@@ -65,48 +65,120 @@ public class Vam extends JFrame{
      */
     HashSet<Integer> errorLineList = new HashSet<Integer>();
 
+    /**
+     * {@link JFrame} containing the {@link processTable}.
+     * @see #addProcessTable()
+     */
     private final JFrame processFrame = new JFrame("Table of Processes");
+    /**
+     * Table in {@link processFrame} containing the values of the {@link Regs Registers} at the various points during the running of the Assembly program.
+     * @see #addProcessTable()
+     */
     private JTable processTable;
 
+    /**
+     * Determines, the next command in the Assembly program should be executed.
+     */
     private boolean processing = false;
-    boolean textChanged;
-    UndoManager undoManager = new UndoManager();
+    /**
+     * Determines, whether the icon of the {@link JFrame JFrames} should flash, when the frame is not focused.
+     */
     boolean flash = true;
 
     /**
      * Position of the various registers in {@link Regs Regs[]}<p>
-     * <code>REG_A</code> position of A (Accumulator = R0).</p>
+     * <code>REG_A</code> position of A (Accumulator = R0).</p><p>
      * <code>NREGS</code>  number of registers (excluding A = Accumulator = R0) (R1, R2, …,R15 --&gt; NREGS = 15).</p><p>
      * <code>REG_BZ</code>  position of BZ (= command counter).</p><p>
      * <code>REG_SR</code>  position of SR (= status register).<br>
-     * Note that if the corresponding bits are activated, that {@link Regs Regs[REG_A]} has the corresponding status.<br>
-     * 0b100 stand for an overflow.<br>
-     * 0b010 stand for {@link Regs Regs[REG_A]} &gt; 0<br>
-     * 0b001 stand for {@link Regs Regs[REG_A]} &lt; 0</p>
+     * <b>Note</b> that if the corresponding bits are activated, that {@link Regs Regs[REG_A]} has the corresponding status.<br>
+     * 0b100 stands for an overflow.<br>
+     * 0b010 stands for {@link Regs Regs[REG_A]} &gt; 0<br>
+     * 0b001 stands for {@link Regs Regs[REG_A]} &lt; 0</p>
      */
     static final int REG_A = 0, NREGS = 15, REG_BZ = 16, REG_SR = 17;
 
     /**
-     * Array of Registers.
+     * Array of Registers.<p>
+     * To get the positions of the different registers see: {@link REG_A} {@link REG_BZ} {@link REG_SR}</p>
      */
     final int[] Regs = new int[18];
 
+    /**
+     * {@link List} of Holbein Logos in different sizes, used for the {@link JFrame} of {@link Vam}.
+     */
     final List <Image> holbeinLogos = new ArrayList<Image>(5);
 
+    /**
+     * {@link HashMap} of labels names (= key), that point to a unique {@link Integer} value representing the line numbering.
+     * @see lineNumbering
+     */
     private final HashMap<String, Integer> assemblyLabels = new HashMap<String, Integer>();
 
-    int numberOfLines = 1; //do not change this value here
-
+    /**
+     * {@link JPanel} on the left side of the {@link JFrame} of {@link Vam}, containing the {@link JPanel} {@link lineNumbering} on the left
+     * and the {@link textArea} filling the rest of the width of the panel.<p>
+     * This panel is initialized in {@link addleftPanel()} and is added to the {@link JFrame} of {@link Vam} as part of a {@link JScrollPane}.</p>
+     */
     private JPanel panelLeft;
+    /**
+     * Represents the number of lines the {@link textArea} currently has.<p>
+     * Do not change the value assignment here to anything but <code>1</code>, or there will be problems with the Interface showing ting correctly.</p>
+     * @see #addleftPanel()
+     * @see #reDrawLeftIcons()
+     */
+    int numberOfLines = 1;
+    /**
+     * {@link JPanel} on the left side of {@link panelLeft} that has 3 columns and the same number of rows as {@link textArea}, where each cell is filled with a {@link JLabel}.<p>
+     * The leftmost column has one of four status icons in it, the middle column has the line number in it and the right column a colon.</p><p>
+     * <b>Note</b> that the line numbering starts at line 1 and increments from there line for line.</p>
+     * @see EMPTY
+     * @see ARROW
+     * @see ERROR
+     * @see ARROW_ERROR
+     * @see numberOfLines
+     */
     JPanel lineNumbering = new JPanel();
-    static final ImageIcon EMPTY = new ImageIcon(Vam.class.getResource("resources/empty_16x12.png"));
-    static final ImageIcon ARROW = new ImageIcon(Vam.class.getResource("resources/arrow_16x12.png"));
-    static final ImageIcon ERROR = new ImageIcon(Vam.class.getResource("resources/error_16x15.png"));
-    static final ImageIcon ARROW_ERROR = new ImageIcon(Vam.class.getResource("resources/arrow_error_16x15.png"));
+    /**
+     * Images in the left column {@link lineNumbering} for the various statuses.<p>
+     * <code>EMPTY</code> is a place holder.</p><p>
+     * <code>ARROW</code> is a green arrow, signalizing which line the program is in.</p><p>
+     * <code>ERROR</code> is a warning sign, signalizing in which line there is an error.</p><p>
+     * <code>ARROW_ERROR</code> is a green arrow and a warning sign, for the case, that in the line the program is in, there is an error.</p>
+     */
+    static final ImageIcon EMPTY = new ImageIcon(Vam.class.getResource("resources/empty_16x12.png")),
+                            ARROW = new ImageIcon(Vam.class.getResource("resources/arrow_16x12.png")),
+                            ERROR = new ImageIcon(Vam.class.getResource("resources/error_16x15.png")),
+                            ARROW_ERROR = new ImageIcon(Vam.class.getResource("resources/arrow_error_16x15.png"));
+    /**
+     * The area in {@link panelLeft}, where the user can write his Assembler code into.
+     */
     JTextArea textArea = new JTextArea(numberOfLines, 1);
 
+    /**
+     * {@link JPanel} on the right side of the {@link JFrame} of {@link Vam}, with 3 columns and the one row more than the length of {@link Regs},
+     * filled with {@link JLabel JLabels} from {@link labels}.<p>
+     * The first column has the name of the register e.g. "BZ".<br>
+     * The third column has the bit value of the register e.g. "00010111".<br>
+     * The third column has the decimal value of the register e.g. "23".<br>
+     * The last row has the three buttons: {@link start} {@link oneStep} {@link reset} in it.</p>
+     * @see #addRightPanel()
+     * @see #reDrawRightPanel()
+     */
     private JPanel panelRight;
+    /**
+     * {@link JLabel JLabels} in {@link panelRight}, that have the name, the bit value and the decimal value of the {@link Regs Registers}.<p>
+     * <b>Note:</b> the order doe not correspond to the order in the {@link Regs Registers}.</p>
+     * @see #addRightPanel()
+     * @see #reDrawRightPanel()
+     */
     private final JLabel[][] labels = new JLabel[3][19];
+    /**
+     * Buttons in {@link panelRight}, beneath the {@link labels}. To see, what button does what, click one of the following links.
+     * @see #start()
+     * @see #oneStep()
+     * @see #reset()
+     */
     private JButton start, oneStep, reset;
 
     private JFrame errorFrame; //small JFrame with error message, that pops up when there was an error
@@ -115,24 +187,78 @@ public class Vam extends JFrame{
 
     /**
      * {@link JMenuItem JMenuItems} that are in the {@link JMenu} "File", that is in the {@link JMenuBar} created in {@link #setMenu()}.
+     * @see #save()
+     * @see #saveAs()
+     * @see #open()
+     * @see #setMenu()
      */
     private JMenuItem save, saveAs, open, quit;
+    /**
+     * {@link JMenuItem} in the {@link JMenu} "Edit" to undo the last change in the {@link textArea}.
+     * @see undoManager
+     * @see textChanged
+     * @see redo
+     */
     JMenuItem undo;
+    /**
+     * {@link JMenuItem} in the {@link JMenu} "Edit" to redo the last change in the {@link textArea}.
+     * @see undoManager
+     * @see textChanged
+     * @see undo
+     */
     private JMenuItem redo;
+    /**
+     * Shows, whether the text in the {@link textArea} has changed.
+     * @see undoManager
+     * @see undo
+     * @see redo
+     */
+    boolean textChanged;
+    /**
+     * Manages the undoing and redoing of the text in the {@link textArea}.
+     * @see undo
+     * @see redo
+     * @see textChanged
+     */
+    UndoManager undoManager = new UndoManager();
 
+    /**
+     * Path of the file to {@link save}, {@link saveAs} or {@link open}.
+     * @see #save()
+     * @see #saveAs()
+     * @see #open()
+     */
     private String path = "";
 
-    private RegisterWidth.Handler widthHandler = null;
+    /**
+     * Reference to an object of the interface {@link RegisterWidth.Handler} in the class {@link RegisterWidth}.<p>
+     * <b>Note:</b> Do not change the assignment here, without changing, which {@link JRadioButtonMenuItem} is clicked.</p>
+     * @see RegisterWidth.int8Width
+     * @see RegisterWidth.int16Width
+     * @see RegisterWidth.int32Width
+     */
+    private RegisterWidth.Handler widthHandler = new RegisterWidth.int8Width();
 
-    // Forwards
-    private RegisterWidth.Handler widthHandler() {
-        if (widthHandler == null) widthHandler = new RegisterWidth.int8Width();
-        return widthHandler;
-    }
-
-    private boolean isOverflow (int value) { return widthHandler().isOverflow(value); }
-    private int cast (int value) { return widthHandler().cast(value); }
-    private String toBitString(int value) { return widthHandler().toBinaryString(value); }
+    /**
+     * Checks if the value is an overflow, based on the current number of bits.<p>
+     * <b>Note:</b> Does not work for a 32-bit overflow.</p>
+     * @param value to be checked for an overflow
+     * @return true if the value is an overflow, otherwise false
+     */
+    private boolean isOverflow(int value) { return widthHandler.isOverflow(value); }
+    /**
+     * Casts the value into a number with the current number of bits.<p>
+     * 8 bits: cast(200) = -56</p>
+     * @param value to be cast
+     * @return cast value
+     */
+    private int cast(int value) { return widthHandler.cast(value); }
+    /**
+     * Turns the value into a {@link String} of bits, corresponding to the value and with a space every byte.
+     * @param value to be turned into a {@link String} of bits
+     * @return {@link String} of bits, corresponding to the value and with a space every byte
+     */
+    private String toBitString(int value) { return widthHandler.toBinaryString(value); }
 
     /**
      * Constructs a new Virtual Assembly Machine.
@@ -166,7 +292,7 @@ public class Vam extends JFrame{
     }
 
     /**
-     * Executes the program by calling the constructor {@link #Vam()}
+     * Executes the program by calling the constructor {@link #Vam()}.
      */
     public static void main(String args[]) {
         new Vam();
@@ -179,7 +305,7 @@ public class Vam extends JFrame{
     }
 
     /**
-     * Sets the {@link JMenuBar} at the top of the JFrame of {@link Vam}.
+     * Sets the {@link JMenuBar} at the top of the {@link JFrame} of {@link Vam}.
      */
     private void setMenu() {
         JMenu file = new JMenu("File");
@@ -491,7 +617,7 @@ public class Vam extends JFrame{
     }
 
     /**
-     * Adds a process Table, when called by the {@link JMenuItem}, by setting {@link processFrame} visible and adding {@link processTable} to it.
+     * Adds a Table of Processes, by setting {@link processFrame} visible and adding {@link processTable} to it, when called by the {@link JMenuItem}.
      */
     private void addProcessTable() {        
         if (!processFrame.isVisible()) {
@@ -549,7 +675,7 @@ public class Vam extends JFrame{
     }
 
     /**
-     * Initializes the left panel including adding it to the {@link JFrame} of {@link Vam}.
+     * Initializes {@link panelLeft} including adding it to the {@link JFrame} of {@link Vam}.
      */
     private void addleftPanel() {
         panelLeft = new JPanel(new BorderLayout());
@@ -579,7 +705,7 @@ public class Vam extends JFrame{
 
 
     /**
-     * Updates the icons left of the line numbering, that are in the {@link JPanel} {@link lineNumbering}.
+     * Updates the icons in {@link lineNumbering}, that are left of the line numbers and in {@link panelLeft}.
      */
     private void reDrawLeftIcons() {
         lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 3));
@@ -604,7 +730,7 @@ public class Vam extends JFrame{
     }
 
     /**
-     * Initializes the right panel including adding it to the {@link JFrame} of {@link Vam}.
+     * Initializes {@link panelRight} including adding it to the {@link JFrame} of {@link Vam}.
      */
     private void addRightPanel() {
         panelRight = new JPanel(new GridBagLayout());
@@ -673,15 +799,15 @@ public class Vam extends JFrame{
     }
 
     /**
-     * Updates the values of the {@link Regs Registers} displayed on {@link panelRight}, by changing the Text of the corresponding {@link labels labels[][]}.
+     * Updates the values of the {@link Regs Registers} displayed in {@link panelRight}, by changing the text of the corresponding {@link labels labels[][]}.
      */
     private void reDrawRightPanel() {
         labels[1][0].setText(toBitString(Regs[REG_SR]));
         labels[2][0].setText(Integer.toString(Regs[REG_SR]));
-        labels[1][1].setText(widthHandler().toBinaryString(Regs[REG_BZ]));
+        labels[1][1].setText(widthHandler.toBinaryString(Regs[REG_BZ]));
         labels[2][1].setText(Integer.toString(Regs[REG_BZ]));
         for (int i=0; i<=NREGS; i++) {
-            labels[1][i+2].setText(widthHandler().toBinaryString(Regs[i]));
+            labels[1][i+2].setText(widthHandler.toBinaryString(Regs[i]));
             labels[2][i+2].setText(Integer.toString(Regs[i]));
         }
     }
@@ -756,6 +882,10 @@ public class Vam extends JFrame{
         reDrawLeftIcons();
     }
 
+    /**
+     * Runs the Assembly program from the line, that {@link Regs Regs[REGS_BZ]} is in.
+     * @see REG_BZ
+     */
     private void start() {
         scanForLabels();
 
@@ -784,14 +914,20 @@ public class Vam extends JFrame{
     }
 
     //separates the command and the rest
+    /**
+     * Checks if the line is syntactically correct and calls the method based on, what the what the command is.
+     * @param input rough text of a line in the code, without new lines (= "\n") in it
+     */
     private void check(String input) {
         input = getLineNoComment(input);
 
+        //checks if the command is "END"
         if (input.equals("END")) {
             machine_END(-1);
             return;
         }
         
+        //checks if the line is empty or there is only a commment in it.
         if(input.equals("") || input.substring(0, 2).equals("--")) {
         	Regs[REG_BZ]++;
         	return;
@@ -801,7 +937,7 @@ public class Vam extends JFrame{
         if (space == -1) {
             int colon = input.indexOf(':');
             if (colon == -1) {
-                def(input);
+                defError(input);
                 return;
             }
             if (assemblyLabels.containsKey(input.substring(0, colon)) && assemblyLabels.get(input.substring(0, colon)) != Regs[REG_BZ]) {
@@ -833,20 +969,32 @@ public class Vam extends JFrame{
             meth.invoke(this, value);
             return;
         } catch (NoSuchMethodException e) {
-            def(input);
+            defError(input);
         } catch (Exception e) {
             error("Something else bad happened: " + input);
         }
     }
 
-    private void def(String input) {
+    /**
+     * Default for an error message.
+     * This method calls {@link #error error(String text)}, with the parameter being the input with some extra text added.<p>
+     * <b>Note:</b> Only call this method, when {@link Regs Regs[REG_BZ]} corresponds to the line number you want to have the {@link ERROR ERROR-icon} appear in.</p>
+     * @param input {@link String} of the command in the line in which there was the error.
+     */
+    private void defError(String input) {
         error("Unknown command: \""+ input + "\" in line: "+Regs[REG_BZ]+"!");
     }
 
+    /**
+     * Error message, that is printed and shown in the {@link errorFrame}.<p>
+     * <b>Note:</b> Only call this method, when {@link Regs Regs[REG_BZ]} corresponds to the line number you want to have the {@link ERROR ERROR-icon} appear in.</p>
+     * @param text {@link String} that should be printed and shown in the {@link errorFrame}.
+     * @see errorPanel
+     */
     @SuppressWarnings("unused")
     private void error(String text) {
-        String caller = Thread.currentThread().getStackTrace()[2].getMethodName(); //for debug purposes: shows in which method def(String) was called
-        int lineNo = Thread.currentThread().getStackTrace()[2].getLineNumber(); //for debug purposes: show in which line def(String) was called
+        String caller = Thread.currentThread().getStackTrace()[2].getMethodName(); //for debug purposes: shows in which method error(String) was called
+        int lineNo = Thread.currentThread().getStackTrace()[2].getLineNumber(); //for debug purposes: show in which line error(String) was called
 
         errorLineList.add(Regs[REG_BZ]);
 
@@ -871,10 +1019,19 @@ public class Vam extends JFrame{
         processing = false;
     }
 
+    /**
+     * Error message, that is printed and shown in the {@link errorFrame}.<p>
+     * <b>Note:</b> If you only want to have an {@link ERROR ERROR-icon} appearing in one line, use the same line for line1 and line2.</p>
+     * @param text {@link String} that should be printed and shown in the {@link errorFrame}.
+     * @param line1 first line, in which there should be an {@link ERROR ERROR-icon} appearing on the left.
+     * @param line2 second line, in which there should be an {@link ERROR ERROR-icon} appearing on the left.
+     * @see errorPanel
+     * @see lineNumbering
+     */
     @SuppressWarnings("unused")
     private void labelError(String text, int line1, int line2) {
-        String caller = Thread.currentThread().getStackTrace()[2].getMethodName(); //for debug purposes: shows in which method def(String) was called
-        int lineNo = Thread.currentThread().getStackTrace()[2].getLineNumber(); //for debug purposes: show in which line def(String) was called
+        String caller = Thread.currentThread().getStackTrace()[2].getMethodName(); //for debug purposes: shows in which method error(String) was called
+        int lineNo = Thread.currentThread().getStackTrace()[2].getLineNumber(); //for debug purposes: show in which line error(String) was called
 
         errorLineList.add(line1);
         errorLineList.add(line2);
@@ -899,6 +1056,10 @@ public class Vam extends JFrame{
         errorFrame.setVisible(true);
     }
 
+    /**
+     * Scans the whole text of {@link textArea} and adds the labels to {@link assemblyLabels}.
+     * If there are multiple same labels in different lines, {@link #labelError()} is called.
+     */
     private void scanForLabels() {
         assemblyLabels.clear();
 
@@ -929,21 +1090,33 @@ public class Vam extends JFrame{
     }
 
     /**
-     * @param tag lookup for possible label. Shall not contain leading/trailing space (ie, trimmed)
+     * Returns the line number, that a specific label is in.
+     * @param tag lookup for possible label. Shall not contain leading/trailing space (i.e. trim ahead of time)
      * @return The corresponding line number or -1 if not found.
      */
     private int getAssemblyLabelLine(String tag) {
         return (assemblyLabels.containsKey(tag) ? assemblyLabels.get(tag) : -1);
     }
 
+    /**
+     * Checks if the register is a bad register i.e. smaller than zero or greater than {@link NREGS}
+     * @param register number corresponding to the {@link Regs Regs[register]}
+     * @return false if 0 &lt; register &lt; {@link NREGS} otherwise true.
+     */
     public boolean isBadRegister(int register) {
-        boolean bad = (register <= 0 || register >= NREGS);
+        boolean bad = (register < 0 || register >= NREGS);
         if (bad) {
             error(register+" in line: "+Regs[REG_BZ]+" is an invalid register!");
         }
         return bad;
     }
 
+    /**
+     * Sets the last two bits of {@link Regs Regs[REG_SR]}, that show, whether the value is positive or negative.
+     * @param value usually of {@link Regs Regs[REG_A]}, that should be checked whether it is positive or negative
+     * @see REG_SR
+     * @see REG_A
+     */
     private void setSignStatus(int value){
         Regs[REG_SR] = 0; // clear all bits
         if (value > 0) {
@@ -953,6 +1126,12 @@ public class Vam extends JFrame{
         }
     }
 
+    /**
+     * Sets all three used bits of {@link Regs Regs[REG_SR]}, that show, whether the value had an overflow and whether it is positive or negative.
+     * @param value usually of {@link Regs Regs[REG_A]}, that should be checked
+     * @see REG_SR
+     * @see REG_A
+     */
     private void safeNumberCast(int value){
         setSignStatus(value);
 
@@ -965,6 +1144,11 @@ public class Vam extends JFrame{
         Regs[REG_A] = cast(value);
     }
 
+    /**
+     * Copies the value from a register into {@link Regs Regs[REG_A]}.
+     * @param register {@link Regs Regs[register]}, that the value should be copied from
+     * @see REG_A
+     */
     public void machine_LOAD(int register) {
         if (isBadRegister(register)) return;
 
@@ -974,6 +1158,11 @@ public class Vam extends JFrame{
         Regs[REG_BZ]++;
     }
 
+    /**
+     * Loads a value into {@link Regs Regs[REG_A]}.
+     * @param number that should be loaded
+     * @see REG_A
+     */
     public void machine_DLOAD(int number) {
         if (isOverflow(number)) {
             error(number+" in line: "+Regs[REG_BZ]+" is a too big number");
@@ -984,6 +1173,11 @@ public class Vam extends JFrame{
         Regs[REG_BZ]++;
     }
 
+    /**
+     * Copies the value from {@link Regs Regs[REG_A]} into a register.
+     * @param register {@link Regs Regs[register]}, that the value should be copied into
+     * @see REG_A
+     */
     public void machine_STORE(int register) {
         if (isBadRegister(register)) return;
 
@@ -991,6 +1185,11 @@ public class Vam extends JFrame{
         Regs[REG_BZ]++;
     }
 
+    /**
+     * Adds the value from a register with the value of {@link Regs Regs[REG_A]} and saves it in {@link Regs Regs[REG_A]}.
+     * @param register {@link Regs Regs[register]}, that should be added to the value of {@link Regs Regs[REG_A]}
+     * @see REG_A
+     */
     public void machine_ADD(int register) {
         if (isBadRegister(register)) return;
 
@@ -1001,6 +1200,11 @@ public class Vam extends JFrame{
 
     }
 
+    /**
+     * Subtracts the value from a register off of the value of {@link Regs Regs[REG_A]} and saves it in {@link Regs Regs[REG_A]}.
+     * @param register {@link Regs Regs[register]}, that should be subtracted off of the value of {@link Regs Regs[REG_A]}
+     * @see REG_A
+     */
     public void machine_SUB(int register) {
         if (isBadRegister(register)) return;
 
@@ -1016,6 +1220,11 @@ public class Vam extends JFrame{
         Regs[REG_BZ]++;
     }
 
+    /**
+     * Multiplies the value from a register with the value of {@link Regs Regs[REG_A]} and saves it in {@link Regs Regs[REG_A]}.
+     * @param register {@link Regs Regs[register]}, that should be multiplied with the value of {@link Regs Regs[REG_A]}
+     * @see REG_A
+     */
     public void machine_MULT(int register) {
         if (isBadRegister(register)) return;
 
@@ -1023,7 +1232,7 @@ public class Vam extends JFrame{
         try {
             temp = Regs[REG_A] * Regs[register];
         }catch(Exception e) {
-            def(""+register);
+            defError(""+register);
             return;
         }
 
@@ -1031,6 +1240,11 @@ public class Vam extends JFrame{
         Regs[REG_BZ]++;
     }
 
+    /**
+     * Divides value of {@link Regs Regs[REG_A]} by the value from a register and saves it in {@link Regs Regs[REG_A]}.
+     * @param register {@link Regs Regs[register]}, that the value of {@link Regs Regs[REG_A]} should be divided by
+     * @see REG_A
+     */
     public void machine_DIV(int register) {
         if (isBadRegister(register)) return;
 
@@ -1046,6 +1260,11 @@ public class Vam extends JFrame{
         Regs[REG_BZ]++;
     }
 
+    /**
+     * Jumps into another line, by setting {@link Regs Regs[REG_BZ]} to <code>line</code>.
+     * @param line to jump into
+     * @see REG_BZ
+     */
     public void machine_JUMP(int line) {
         if (isOverflow(line)) {
             error("invalid line number: " + line);
@@ -1055,6 +1274,12 @@ public class Vam extends JFrame{
         Regs[REG_BZ] = line;
     }
 
+    /**
+     * Jumps into another line, if {@link Regs Regs[REG_A]} is equal to 0, by setting {@link Regs Regs[REG_BZ]} to <code>line</code>.
+     * @param line to jump into
+     * @see REG_BZ
+     * @see REG_A
+     */
     public void machine_JEQ(int line) {
         if ((Regs[REG_SR] & 0b111) == 0) {
             // All status bits are good (clear)
@@ -1064,6 +1289,12 @@ public class Vam extends JFrame{
         }
     }
 
+    /**
+     * Jumps into another line, if {@link Regs Regs[REG_A]} is greater than or equal to 0, by setting {@link Regs Regs[REG_BZ]} to <code>line</code>.
+     * @param line to jump into
+     * @see REG_BZ
+     * @see REG_A
+     */
     public void machine_JGE(int line) {
         if ((Regs[REG_SR] & 0b001) == 0) {
             // Last status bit is good (clear)
@@ -1073,6 +1304,12 @@ public class Vam extends JFrame{
         }
     }
 
+    /**
+     * Jumps into another line, if {@link Regs Regs[REG_A]} is equal than 0, by setting {@link Regs Regs[REG_BZ]} to <code>line</code>.
+     * @param line to jump into
+     * @see REG_BZ
+     * @see REG_A
+     */
     public void machine_JGT(int line) {
         if ((Regs[REG_SR] & 0b010) != 0) {
             // Second last status bit is set
@@ -1082,6 +1319,12 @@ public class Vam extends JFrame{
         }
     }
 
+    /**
+     * Jumps into another line, if {@link Regs Regs[REG_A]} is smaller than or equal to 0, by setting {@link Regs Regs[REG_BZ]} to <code>line</code>.
+     * @param line to jump into
+     * @see REG_BZ
+     * @see REG_A
+     */
     public void machine_JLE(int line) {
         if ((Regs[REG_SR] & 0b010) == 0) {
             // Second last status bit is clear
@@ -1091,6 +1334,12 @@ public class Vam extends JFrame{
         }
     }
 
+    /**
+     * Jumps into another line, if {@link Regs Regs[REG_A]} is smaller than 0, by setting {@link Regs Regs[REG_BZ]} to <code>line</code>.
+     * @param line to jump into
+     * @see REG_BZ
+     * @see REG_A
+     */
     public void machine_JLT(int line) {
         if ((Regs[REG_SR] & 0b001) == 0) {
             // Last status bit is clear
@@ -1100,6 +1349,12 @@ public class Vam extends JFrame{
         }
     }
 
+    /**
+     * Jumps into another line, if {@link Regs Regs[REG_A]} is not equal to 0, by setting {@link Regs Regs[REG_BZ]} to <code>line</code>.
+     * @param line to jump into
+     * @see REG_BZ
+     * @see REG_A
+     */
     public void machine_JNE(int line) {
         if ((Regs[REG_SR] & 0b011) != 0) {
             // Either of the last status bits are set
@@ -1109,6 +1364,10 @@ public class Vam extends JFrame{
         }
     }
 
+    /**
+     * Ends the running of the Assembly program.
+     * @param unused not used
+     */
     public void machine_END(int unused) {
         processing = false;
         Regs[REG_BZ]++;
