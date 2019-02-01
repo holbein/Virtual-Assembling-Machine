@@ -88,7 +88,7 @@ public class Vam extends JFrame{
     /**
      * Position of the various registers in {@link Regs Regs[]}<p>
      * <code>REG_A</code> position of A (Accumulator = R0).</p><p>
-     * <code>NREGS</code>  number of registers (excluding A = Accumulator = R0) (R1, R2, …,R15 --&gt; NREGS = 15).</p><p>
+     * <code>NREGS</code>  number of registers (excluding A = Accumulator = R0) (R1, R2, ...,R15 --&gt; NREGS = 15).</p><p>
      * <code>REG_BZ</code>  position of BZ (= command counter).</p><p>
      * <code>REG_SR</code>  position of SR (= status register).<br>
      * <b>Note</b> that if the corresponding bits are activated, that {@link Regs Regs[REG_A]} has the corresponding status.<br>
@@ -321,7 +321,7 @@ public class Vam extends JFrame{
         file.add(save);
 
         saveAs = new JMenuItem(
-            new AbstractAction("Save As…", new ImageIcon(Vam.class.getResource("resources/disk_2.png"))) {
+            new AbstractAction("Save As...", new ImageIcon(Vam.class.getResource("resources/disk_2.png"))) {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     saveAs();
@@ -330,7 +330,7 @@ public class Vam extends JFrame{
         file.add(saveAs);
 
         open = new JMenuItem(
-                new AbstractAction("Open File…", new ImageIcon(Vam.class.getResource("resources/folder_explore.png"))) {
+                new AbstractAction("Open File...", new ImageIcon(Vam.class.getResource("resources/folder_explore.png"))) {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         open();
