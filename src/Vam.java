@@ -206,7 +206,7 @@ public class Vam extends JFrame{
      * @see textChanged
      * @see undo
      */
-    private JMenuItem redo;
+    JMenuItem redo;
     /**
      * Shows, whether the text in the {@link textArea} has changed.
      * @see undoManager
@@ -396,11 +396,11 @@ public class Vam extends JFrame{
                 new AbstractAction("Redo", new ImageIcon(Vam.class.getResource("resources/arrow_redo.png"))) {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        undoManager.redo();
-                        undo.setEnabled(true);
-                        if(!undoManager.canRedo()) {
-                        	redo.setEnabled(false);
-                        }
+                    	if(undoManager.canRedo()) {
+	                        undoManager.redo();
+	                        undo.setEnabled(true);
+                    	}
+                        redo.setEnabled(undoManager.canRedo());
                     }
                 });
         

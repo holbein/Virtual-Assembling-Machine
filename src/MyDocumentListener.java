@@ -41,6 +41,7 @@ class MyDocumentListener implements DocumentListener {
         }
         parent.textChanged = true;
         parent.undo.setEnabled(parent.undoManager.canUndo());
+        parent.redo.setEnabled(parent.undoManager.canRedo());
     }
 
     public void removeUpdate(DocumentEvent e) {
@@ -53,11 +54,15 @@ class MyDocumentListener implements DocumentListener {
         }
         parent.textChanged = true;
         parent.undo.setEnabled(parent.undoManager.canUndo());
+        parent.redo.setEnabled(parent.undoManager.canRedo());
     }
 
     public void changedUpdate(DocumentEvent e) {
         parent.textChanged = true;
         parent.undo.setEnabled(parent.undoManager.canUndo());
+        parent.redo.setEnabled(parent.undoManager.canRedo());
     }
+    
+    
 
 }
