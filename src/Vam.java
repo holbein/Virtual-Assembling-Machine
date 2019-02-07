@@ -949,7 +949,7 @@ public class Vam extends JFrame{
             return;
         }
 
-        String command = input.substring(0, space).trim();
+        String command = input.substring(0, space).trim().toUpperCase();
         String arg = input.substring(space+1).trim();
 
         // Convert to int, or see if it is a labeled line number (starts with 'J')
