@@ -231,6 +231,11 @@ public class Vam extends JFrame{
     private String path = "";
 
     /**
+     * Frame, that displays the commands.
+     */
+    private JFrame readMe = new JFrame("List of Commands");
+
+    /**
      * Reference to an object of the interface {@link RegisterWidth.Handler} in the class {@link RegisterWidth}.<p>
      * <b>Note:</b> Do not change the assignment here, without changing, which {@link JRadioButtonMenuItem} is clicked.</p>
      * @see RegisterWidth.int8Width
@@ -447,10 +452,21 @@ public class Vam extends JFrame{
         view.add(showTable);
         view.add(editFlash);
 
+        JMenuItem showReadMe = new JMenuItem(new AbstractAction ("Show the list of commands"){
+            @Override
+            public void actionPerformed (ActionEvent e){
+                showReadMe();
+            }
+        });
+
+        JMenu help = new JMenu("Help");
+        help.add(showReadMe);
+
         JMenuBar mbar = new JMenuBar();
         mbar.add(file);
         mbar.add(edit);
         mbar.add(view);
+        mbar.add(help);
 
         setJMenuBar(mbar);
     }
@@ -672,6 +688,83 @@ public class Vam extends JFrame{
         }
         
         ((DefaultTableModel)processTable.getModel()).addRow(row);
+    }
+
+    /**
+     * Shows the list of commands.
+     * It is called, when the {@link JMenuItem} in the {@link JMenu} "Help" is clicked.
+     */
+    private void showReadMe(){
+        if(!readMe.isVisible()){
+            readMe.setSize(540, 600);
+            JTextArea area = new JTextArea();
+            area.setEditable(false);
+            area.setText(
+                "The commands:\n" + "\n" +
+                "    LOAD x:\n" +
+                "        copies the value in Rx to A\n" +
+                "        increases the value in BZ by 1\n" +
+                "    DLOAD i:\n" +
+                "        directly loads the number i in A\n" +
+                "        increases the value in BZ by 1\n" +
+                "    STORE x:\n" +
+                "        copies the value in A to Rx\n" +
+                "        increases the value in BZ by 1\n" +
+                "    ADD x:\n" +
+                "        adds the value in Rx to the value of A\n" +
+                "        stores the result in A\n" +
+                "        increases the value in BZ by 1\n" +
+                "    SUB x:\n" +
+                "        subtracts the value in Rx from the value in A\n" +
+                "        stores the result in A\n" +
+                "        increases the value in BZ by 1\n" +
+                "    MULT x:\n" +
+                "        multiplies the value in Rx with the value in A\n" +
+                "        stores the result in A\n" +
+                "        increases the value in BZ by 1\n" +
+                "    DIV x:\n" +
+                "        devides the value in A by the value in Rx\n" +
+                "        stores the result in A\n" +
+                "        increases the value in BZ by 1\n" +
+                "    JUMP n:\n" +
+                "        loads the number n in BZ\n" +
+                "    JGE n:\n" +
+                "        loads the number n in BZ if the value in A is bigger or equal zero\n" +
+                "        if not: increases the value in BZ by 1\n" +
+                "    JGT n:\n" +
+                "        loads the number n in BZ if the value in A is greater than zero\n" +
+                "        if not: increases the value in BZ by 1\n" +
+                "    JLE n:\n" +
+                "        loads the number n in BZ if the value in A is less or equal zero\n" +
+                "        if not: increases the value in BZ by 1\n" +
+                "    JLT n:\n" +
+                "        loads the number n in BZ if the value in A is less than zero\n" +
+                "        if not: increases the value in BZ by 1\n" +
+                "    JEQ n:\n" +
+                "        loads the number n in BZ if the value in A is equal zero\n" +
+                "        if not: increases the value in BZ by 1\n" +
+                "    JNE n:\n" +
+                "        loads the number n in BZ if the value in A is not equal zero\n" +
+                "        if not: increases the value in BZ by 1\n" +
+                "    END:\n" +
+                "        increases the value in BZ by 1\n" +
+                "        terminates the program run\n" + "\n" +
+                "Other important stuff:\n" + "\n" +
+                "    Rx:\n" +
+                "        a register you can use to save numbers (1 Byte)\n" +
+                "        this virtual machine has got 15 (x can be an number from 1 to 15)\n" + "\n" +
+                "    A:\n" +
+                "        the accumulator contains the value for the next calculation and gets its result\n" + "\n" +
+                "    BZ:\n" +
+                "        contains the address of the next command (the line number)\n" +
+                "        if you change this number, you can jump to an other part of your code\n" + "\n" +
+                "    SR:\n" +
+                "        the Status Register contains the flags whether the result of the last logical operation was\n" + 
+                "        too big for one byte (Overflow) an if it was bigger or smaller than zero"
+            );
+            readMe.getContentPane().add(new JScrollPane(area));
+            readMe.setVisible(true);
+        }
     }
 
     /**
