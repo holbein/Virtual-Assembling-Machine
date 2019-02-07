@@ -1282,7 +1282,7 @@ public class Vam extends JFrame{
      */
     public void machine_JEQ(int line) {
         if ((Regs[REG_SR] & 0b111) == 0) {
-            // All status bits are good (clear)
+            // All status bits are clear
             machine_JUMP(line);
         } else {
             Regs[REG_BZ]++;
@@ -1297,7 +1297,7 @@ public class Vam extends JFrame{
      */
     public void machine_JGE(int line) {
         if ((Regs[REG_SR] & 0b001) == 0) {
-            // Last status bit is good (clear)
+            // Last status bit is clear
             machine_JUMP(line);
         } else {
             Regs[REG_BZ]++;
@@ -1341,8 +1341,8 @@ public class Vam extends JFrame{
      * @see REG_A
      */
     public void machine_JLT(int line) {
-        if ((Regs[REG_SR] & 0b001) == 0) {
-            // Last status bit is clear
+        if ((Regs[REG_SR] & 0b001) != 0) {
+            // Last status bit is set
             machine_JUMP(line);
         } else {
             Regs[REG_BZ]++;
