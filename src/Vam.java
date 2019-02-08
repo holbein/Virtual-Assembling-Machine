@@ -8,7 +8,11 @@ import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,6 +26,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -464,6 +469,15 @@ public class Vam extends JFrame{
                 showReadMe();
             }
         });
+        
+        //shortcut ctrl+shift+alt+G
+        textArea.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("control shift alt G"), "Play a Game");
+        textArea.getActionMap().put("Play a Game", new AbstractAction ("Play a Game"){
+            @Override
+            public void actionPerformed (ActionEvent e){
+                hiddenGame();
+            }
+        });        
 
         JMenu help = new JMenu("Help");
         help.add(showReadMe);
@@ -1483,6 +1497,10 @@ public class Vam extends JFrame{
     public void machine_END(int unused) {
         processing = false;
         Regs[REG_BZ]++;
+    }
+    
+    void hiddenGame() {
+    	new EasterEgg(this).start();
     }
 }
 
