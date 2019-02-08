@@ -980,6 +980,7 @@ public class Vam extends JFrame{
      * @see REG_BZ
      */
     private void start() {
+        reset();
         scanForLabels();
 
         while (processing && 0 < Regs[REG_BZ] && Regs[REG_BZ] <= textArea.getLineCount()) {
