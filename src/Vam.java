@@ -69,7 +69,7 @@ public class Vam extends JFrame{
      * {@link JFrame} containing the {@link processTable}.
      * @see #addProcessTable()
      */
-    private final JFrame processFrame = new JFrame("Table of Processes");
+    final JFrame processFrame = new JFrame("Table of Processes");
     /**
      * Table in {@link processFrame} containing the values of the {@link Regs Registers} at the various points during the running of the Assembly program.
      * @see #addProcessTable()
@@ -79,7 +79,7 @@ public class Vam extends JFrame{
     /**
      * Determines, the next command in the Assembly program should be executed.
      */
-    private boolean processing = false;
+    boolean processing = false;
     /**
      * Determines, whether the icon of the {@link JFrame JFrames} should flash, when the frame is not focused.
      */
@@ -179,7 +179,11 @@ public class Vam extends JFrame{
      * @see #oneStep()
      * @see #reset()
      */
-    private JButton start, oneStep, reset;
+    JButton start;
+
+	private JButton oneStep;
+
+	private JButton reset;
 
     private JFrame errorFrame; //small JFrame with error message, that pops up when there was an error
     private final JPanel errorPanel = new JPanel();
@@ -294,6 +298,8 @@ public class Vam extends JFrame{
         setVisible(true);
         
         textArea.getDocument().addUndoableEditListener(undoManager);
+        
+        readMe.setIconImages(holbeinLogos);
     }
 
     /**
@@ -672,7 +678,7 @@ public class Vam extends JFrame{
      * Adds a line to the {@link processTable} in the {@link processFrame} with the values of the various {@link Regs Registers}.
      * @param line that the command is in in the editor (corresponds to the {@link lineNumbering} on the left side of the {@link textArea}).
      */
-    private void printLine(int line) {
+    void printLine(int line) {
         if (assemblyLabels.containsValue(line)
             || getLineNoComment(getTextInLine(line)).equals("")
             || getLineNoComment(getTextInLine(line)).substring(0, 2).equals("--")) {
@@ -800,7 +806,7 @@ public class Vam extends JFrame{
     /**
      * Updates the icons in {@link lineNumbering}, that are left of the line numbers and in {@link panelLeft}.
      */
-    private void reDrawLeftIcons() {
+    void reDrawLeftIcons() {
         lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 3));
 
         for(int lineNo=1; lineNo <= numberOfLines; ++lineNo) {
@@ -864,7 +870,14 @@ public class Vam extends JFrame{
 
         start = new JButton(new AbstractAction("Start") {
             public void actionPerformed(ActionEvent e) {
-                start();
+            	if(!processing) {
+            		start.setText("Stop");
+            		start();
+            	}else {
+            		processing = false;
+            		start.setText("Start");
+            	}
+                
             }
         });
 
@@ -894,7 +907,7 @@ public class Vam extends JFrame{
     /**
      * Updates the values of the {@link Regs Registers} displayed in {@link panelRight}, by changing the text of the corresponding {@link labels labels[][]}.
      */
-    private void reDrawRightPanel() {
+    void reDrawRightPanel() {
         labels[1][0].setText(toBitString(Regs[REG_SR]));
         labels[2][0].setText(Integer.toString(Regs[REG_SR]));
         labels[1][1].setText(widthHandler.toBinaryString(Regs[REG_BZ]));
@@ -910,7 +923,7 @@ public class Vam extends JFrame{
      * @param line corresponding to the {@link lineNumbering} on the left side of the {@link textArea}.
      * @return full {@link String} of that line. (Use {@link getLineNoComment(String)} to remove potential comments and to trim leading or trailing spaces)
      */
-    private String getTextInLine(int line) {
+    String getTextInLine(int line) {
         String text = textArea.getText();
 
         // init with -1 for error detection and to increment in first iteration
@@ -948,7 +961,7 @@ public class Vam extends JFrame{
         }
 
         Regs[REG_BZ] = 1;
-        processing = true;
+        processing = false;
 
         reDrawRightPanel();
         reDrawLeftIcons();
@@ -960,6 +973,7 @@ public class Vam extends JFrame{
      */
     private void oneStep() {
         scanForLabels();
+        processing = true;
 
         if (processing && 0 < Regs[REG_BZ] && Regs[REG_BZ] <= textArea.getLineCount()) {
             if (processFrame.isVisible()){
@@ -970,6 +984,7 @@ public class Vam extends JFrame{
                 check(getTextInLine(Regs[REG_BZ]));
             }
         }
+        processing = false;
 
         reDrawRightPanel();
         reDrawLeftIcons();
@@ -982,8 +997,11 @@ public class Vam extends JFrame{
     private void start() {
         reset();
         scanForLabels();
+        processing = true;
 
-        while (processing && 0 < Regs[REG_BZ] && Regs[REG_BZ] <= textArea.getLineCount()) {
+        new ProgramRun(this).start();
+        
+        /*while (processing && 0 < Regs[REG_BZ] && Regs[REG_BZ] <= textArea.getLineCount()) {
             if (processFrame.isVisible()){
                 int holdLine = Regs[REG_BZ];
                 check(getTextInLine(Regs[REG_BZ]));
@@ -994,7 +1012,7 @@ public class Vam extends JFrame{
         }
 
         reDrawRightPanel();
-        reDrawLeftIcons();
+        reDrawLeftIcons();*/
     }
 
     /**
@@ -1012,11 +1030,11 @@ public class Vam extends JFrame{
      * Checks if the line is syntactically correct and calls the method based on, what the what the command is.
      * @param input rough text of a line in the code, without new lines (= "\n") in it
      */
-    private void check(String input) {
+    void check(String input) {
         input = getLineNoComment(input);
 
         //checks if the command is "END"
-        if (input.equals("END")) {
+        if (input.toUpperCase().equals("END")) {
             machine_END(-1);
             return;
         }
