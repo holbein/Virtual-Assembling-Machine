@@ -51,14 +51,14 @@ import javax.swing.undo.UndoManager;
  * The classes {@link MyDocumentListener}, {@link MyWindowListener} and {@link RegisterWidth} are also used.
  * @author VictorOle
  * @author SBester001
- * @version 1.2.1
+ * @version 1.3.0
  */
 @SuppressWarnings("serial")
 public class Vam extends JFrame{
     /**
      * Version of the Virtual Assembly Machine.
      */
-    private static final String VERSION = "1.2.1";
+    private static final String VERSION = "1.3.0";
 
     /**
      * Width and Height of the JFrame of {@link Vam}.
