@@ -66,11 +66,6 @@ public class Vam extends JFrame{
     private static final int FRAME_WIDTH = 810, FRAME_HEIGHT = 600;
 
     /**
-     * {@link HashSet} of lines with errors in them.
-     */
-    HashSet<Integer> errorLineList = new HashSet<Integer>();
-
-    /**
      * {@link JFrame} containing the {@link processTable}.
      * @see #addProcessTable()
      */
@@ -179,19 +174,46 @@ public class Vam extends JFrame{
      */
     private final JLabel[][] labels = new JLabel[3][19];
     /**
-     * Buttons in {@link panelRight}, beneath the {@link labels}. To see, what button does what, click one of the following links.
+     * Buttons in {@link panelRight}, beneath the {@link labels}.
      * @see #start()
-     * @see #oneStep()
-     * @see #reset()
      */
     JButton start;
+    /**
+     * Buttons in {@link panelRight}, beneath the {@link labels}.
+     * @see #oneStep()
+     */
+    private JButton oneStep;
+    /**
+     * Buttons in {@link panelRight}, beneath the {@link labels}.
+     * @see #reset()
+     */
+    private JButton reset;
 
-	private JButton oneStep;
+    /**
+     * {@link HashSet} of lines with errors in them.
+     */
+    HashSet<Integer> errorLineList = new HashSet<Integer>();
 
-	private JButton reset;
-
-    private JFrame errorFrame; //small JFrame with error message, that pops up when there was an error
+    /**
+     * Small {@link JFrame} with error message(s), that pops up when there was an error containing {@link errorPanel} in {@link errorScroll}.
+     * @see #defError(String) 
+     * @see #error(String)
+     * @see #labelError(String, int, int)
+     */
+    private JFrame errorFrame;
+    /**
+     * {@link JPanel}, that contains the error messages from {@link errorLineList} and is in {@link errorScroll}.
+     * @see #defError(String) 
+     * @see #error(String)
+     * @see #labelError(String, int, int)
+     */
     private final JPanel errorPanel = new JPanel();
+    /**
+     * {@link JScrollPane} contains {@link errorPanel} and is in {@link errorFrame}.
+     * @see #defError(String) 
+     * @see #error(String)
+     * @see #labelError(String, int, int)
+     */
     private final JScrollPane errorScroll = new JScrollPane(errorPanel);
 
     /**
