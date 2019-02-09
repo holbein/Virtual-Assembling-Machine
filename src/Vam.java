@@ -990,6 +990,7 @@ public class Vam extends JFrame{
         processing = true;
 
         if (processing && 0 < Regs[REG_BZ] && Regs[REG_BZ] <= textArea.getLineCount()) {
+            errorLineList.remove(Regs[REG_BZ]);
             if (processFrame.isVisible()){
                 int holdLine = Regs[REG_BZ];
                 check(getTextInLine(Regs[REG_BZ]));
