@@ -1062,7 +1062,6 @@ public class Vam extends JFrame{
         return input.replaceFirst("\\s--.*$", "").trim();
     }
 
-    //separates the command and the rest
     /**
      * Checks if the line is syntactically correct and calls the method based on, what the what the command is.
      * @param input rough text of a line in the code, without new lines (= "\n") in it
@@ -1098,6 +1097,7 @@ public class Vam extends JFrame{
             return;
         }
 
+        //separates the command and the rest
         String command = input.substring(0, space).trim().toUpperCase();
         String arg = input.substring(space+1).trim();
 
