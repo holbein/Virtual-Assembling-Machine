@@ -196,21 +196,21 @@ public class Vam extends JFrame{
 
     /**
      * Small {@link JFrame} with error message(s), that pops up when there was an error containing {@link errorPanel} in {@link errorScroll}.
-     * @see #defError(String) 
+     * @see #defError(String)
      * @see #error(String)
      * @see #labelError(String, int, int)
      */
     private JFrame errorFrame;
     /**
      * {@link JPanel}, that contains the error messages from {@link errorLineList} and is in {@link errorScroll}.
-     * @see #defError(String) 
+     * @see #defError(String)
      * @see #error(String)
      * @see #labelError(String, int, int)
      */
     private final JPanel errorPanel = new JPanel();
     /**
      * {@link JScrollPane} contains {@link errorPanel} and is in {@link errorFrame}.
-     * @see #defError(String) 
+     * @see #defError(String)
      * @see #error(String)
      * @see #labelError(String, int, int)
      */
@@ -323,9 +323,9 @@ public class Vam extends JFrame{
         setMenu();
 
         setVisible(true);
-        
+
         textArea.getDocument().addUndoableEditListener(undoManager);
-        
+
         readMe.setIconImages(holbeinLogos);
     }
 
@@ -415,8 +415,8 @@ public class Vam extends JFrame{
                 }
             })
         };
-        
-        
+
+
         undo = new JMenuItem(
                 new AbstractAction("Undo", new ImageIcon(Vam.class.getResource("resources/arrow_undo.png"))) {
                     @Override
@@ -429,7 +429,7 @@ public class Vam extends JFrame{
                     }
                 });
         undo.setEnabled(false);
-        
+
         redo = new JMenuItem(
                 new AbstractAction("Redo", new ImageIcon(Vam.class.getResource("resources/arrow_redo.png"))) {
                     @Override
@@ -441,27 +441,27 @@ public class Vam extends JFrame{
                         redo.setEnabled(undoManager.canRedo());
                     }
                 });
-        
+
         redo.setEnabled(false);
-        
+
         undo.setAccelerator(KeyStroke.getKeyStroke("control Z")); //shortcut ctrl+z
         redo.setAccelerator(KeyStroke.getKeyStroke("control Y")); //shortcut ctrl+y
 
         JMenu edit = new JMenu("Edit");
-        
+
         edit.add(undo);
         edit.add(redo);
-        
+
         edit.addSeparator();
-        
+
         JMenu subMenu = new JMenu("Number of Bits");
-        
+
         for (JRadioButtonMenuItem rb : bit_buttons) {
             buttonGroup.add(rb);
             subMenu.add(rb);
         }
         bit_buttons[0].setSelected(true); // default is 8-bit
-        
+
         edit.add(subMenu);
 
         JMenuItem showTable = new JMenuItem(new AbstractAction ("Show Table", new ImageIcon(Vam.class.getResource("resources/table.png"))){
@@ -470,7 +470,7 @@ public class Vam extends JFrame{
                 addProcessTable();
             }
         });
-        
+
         JCheckBoxMenuItem editFlash = new JCheckBoxMenuItem(new AbstractAction ("Flash if not used", new ImageIcon(Vam.class.getResource("resources/colouredImages/yellow_16x16.png"))){
             @Override
             public void actionPerformed (ActionEvent e){
@@ -479,7 +479,7 @@ public class Vam extends JFrame{
         });
         editFlash.setSelected(true); //default true --> flashing if not used
         editFlash.setAccelerator(KeyStroke.getKeyStroke("control alt F")); //shortcut ctrl+alt+F
-        
+
 
         JMenu view = new JMenu("View");
         view.add(showTable);
@@ -491,7 +491,7 @@ public class Vam extends JFrame{
                 showReadMe();
             }
         });
-        
+
         //shortcut ctrl+shift+alt+G
         textArea.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("control shift alt G"), "Play a Game");
         textArea.getActionMap().put("Play a Game", new AbstractAction ("Play a Game"){
@@ -499,7 +499,7 @@ public class Vam extends JFrame{
             public void actionPerformed (ActionEvent e){
                 hiddenGame();
             }
-        });        
+        });
 
         JMenu help = new JMenu("Help");
         help.add(showReadMe);
@@ -588,7 +588,7 @@ public class Vam extends JFrame{
             BufferedReader br = new BufferedReader( new FileReader(file));
             Object[] str = br.lines().toArray();
             String whole = "";
-            for(int i = 0; i< str.length; i++) {
+            for (int i = 0; i< str.length; i++) {
                 whole += str[i]+"\n";
             }
             br.close();
@@ -664,7 +664,7 @@ public class Vam extends JFrame{
         }
         Regs[REG_BZ] = cast(Regs[REG_BZ]);
 
-        for(int i=1; i<=NREGS; i++) {
+        for (int i=1; i<=NREGS; i++) {
             if (isOverflow(Regs[i])) {
                 error("Overflow in R"+(i));
             }
@@ -677,7 +677,7 @@ public class Vam extends JFrame{
     /**
      * Adds a Table of Processes, by setting {@link processFrame} visible and adding {@link processTable} to it, when called by the {@link JMenuItem}.
      */
-    private void addProcessTable() {        
+    private void addProcessTable() {
         if (!processFrame.isVisible()) {
             processFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
             processFrame.setSize(700, 400);
@@ -707,7 +707,7 @@ public class Vam extends JFrame{
 
             processFrame.add(scrollProc);
             processFrame.setVisible(true);
-        }        
+        }
     }
 
     /**
@@ -717,10 +717,11 @@ public class Vam extends JFrame{
     void printLine(int line) {
         if (assemblyLabels.containsValue(line)
             || getLineNoComment(getTextInLine(line)).equals("")
-            || getLineNoComment(getTextInLine(line)).substring(0, 2).equals("--")) {
+            || getLineNoComment(getTextInLine(line)).substring(0, 2).equals("--"))
+        {
             return;
         }
-        
+
         String[] row = new String[Regs.length+1];
         row[0] = line+": "+getLineNoComment(getTextInLine(line));
         row[1] = ""+Regs[REG_SR];
@@ -728,7 +729,7 @@ public class Vam extends JFrame{
         for (int i=0; i<=NREGS; i++) {
             row[i+3] = ""+Regs[i];
         }
-        
+
         ((DefaultTableModel)processTable.getModel()).addRow(row);
     }
 
@@ -737,7 +738,7 @@ public class Vam extends JFrame{
      * It is called, when the {@link JMenuItem} in the {@link JMenu} "Help" is clicked.
      */
     private void showReadMe(){
-        if(!readMe.isVisible()){
+        if (!readMe.isVisible()) {
             readMe.setSize(540, 600);
             JTextArea area = new JTextArea();
             area.setEditable(false);
@@ -801,7 +802,7 @@ public class Vam extends JFrame{
                 "        contains the address of the next command (the line number)\n" +
                 "        if you change this number, you can jump to an other part of your code\n" + "\n" +
                 "    SR:\n" +
-                "        the Status Register contains the flags whether the result of the last logical operation was\n" + 
+                "        the Status Register contains the flags whether the result of the last logical operation was\n" +
                 "        too big for one byte (Overflow) an if it was bigger or smaller than zero"
             );
             readMe.getContentPane().add(new JScrollPane(area));
@@ -845,7 +846,7 @@ public class Vam extends JFrame{
     void reDrawLeftIcons() {
         lineNumbering.setLayout(new GridLayout(textArea.getLineCount(), 3));
 
-        for(int lineNo=1; lineNo <= numberOfLines; ++lineNo) {
+        for (int lineNo=1; lineNo <= numberOfLines; ++lineNo) {
             JLabel lab = (JLabel) lineNumbering.getComponent(3*(lineNo-1));
 
             if (errorLineList.contains(lineNo)){
@@ -906,14 +907,14 @@ public class Vam extends JFrame{
 
         start = new JButton(new AbstractAction("Start") {
             public void actionPerformed(ActionEvent e) {
-            	if(!processing) {
+            	if (!processing) {
             		start.setText("Stop");
             		start();
-            	}else {
+            	} else {
             		processing = false;
             		start.setText("Start");
             	}
-                
+
             }
         });
 
@@ -985,9 +986,9 @@ public class Vam extends JFrame{
         errorLineList.clear();
         errorPanel.removeAll();
         assemblyLabels.clear();
-        if(processTable != null){
+        if (processTable != null) {
             DefaultTableModel model = (DefaultTableModel)processTable.getModel();
-            while (1 < model.getRowCount()){
+            while (1 < model.getRowCount()) {
                 model.removeRow(1);
             }
         }
@@ -1037,7 +1038,7 @@ public class Vam extends JFrame{
         processing = true;
 
         new ProgramRun(this).start();
-        
+
         /*while (processing && 0 < Regs[REG_BZ] && Regs[REG_BZ] <= textArea.getLineCount()) {
             if (processFrame.isVisible()){
                 int holdLine = Regs[REG_BZ];
@@ -1074,9 +1075,9 @@ public class Vam extends JFrame{
             machine_END(-1);
             return;
         }
-        
+
         //checks if the line is empty or there is only a commment in it.
-        if(input.equals("") || input.substring(0, 2).equals("--")) {
+        if (input.equals("") || input.substring(0, 2).equals("--")) {
         	Regs[REG_BZ]++;
         	return;
         }
@@ -1159,12 +1160,12 @@ public class Vam extends JFrame{
 
             errorPanel.setLayout(new BoxLayout(errorPanel, BoxLayout.PAGE_AXIS));
         }
-        
+
         errorPanel.add(lError);
         errorFrame.add(errorScroll);
         errorFrame.setLocationRelativeTo(this);
         errorFrame.setVisible(true);
-        
+
         processing = false;
     }
 
@@ -1197,7 +1198,7 @@ public class Vam extends JFrame{
 
             errorPanel.setLayout(new BoxLayout(errorPanel, BoxLayout.PAGE_AXIS));
         }
-        
+
         processing = false;
         errorPanel.add(lError);
         errorFrame.add(errorScroll);
@@ -1212,7 +1213,7 @@ public class Vam extends JFrame{
     private void scanForLabels() {
         assemblyLabels.clear();
 
-        for(int lineNo=1; lineNo<=textArea.getLineCount(); ++lineNo) {
+        for (int lineNo=1; lineNo<=textArea.getLineCount(); ++lineNo) {
             String tag = getLineNoComment(getTextInLine(lineNo));
             int colon = tag.indexOf(':');
             if (colon == -1) continue;
@@ -1521,7 +1522,7 @@ public class Vam extends JFrame{
         processing = false;
         Regs[REG_BZ]++;
     }
-    
+
     void hiddenGame() {
     	new EasterEgg(this).start();
     }

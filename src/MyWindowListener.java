@@ -7,13 +7,13 @@ import java.util.List;
 import javax.swing.ImageIcon;
 
 public class MyWindowListener implements WindowListener{
-    Vam parent;
-    boolean iconified;
+    private final Vam parent;
+    private boolean iconified;
 
-    private static final int sleepTime = 150;
+    private static final int SLEEP_TIME = 150;
 
-    List <Image> red = new ArrayList<Image>();
-    List <Image> yellow = new ArrayList<Image>();
+    private final List <Image> red = new ArrayList<Image>();
+    private final List <Image> yellow = new ArrayList<Image>();
 
     public MyWindowListener(Vam parent) {
         this.parent = parent;
@@ -77,17 +77,16 @@ public class MyWindowListener implements WindowListener{
         @Override
         public void run() {
             long i = 0;
-            while(iconified) {
-                if(i%2 == 0) {
+            while (iconified) {
+                if (i%2 == 0) {
                     parent.setIconImages(red);
                 } else {
                     parent.setIconImages(yellow);
                 }
 
                 i++;
-                try
-                {
-                    sleep(sleepTime);
+                try {
+                    sleep(SLEEP_TIME);
                 }
                 catch (InterruptedException e1) {e1.printStackTrace(); }
             }

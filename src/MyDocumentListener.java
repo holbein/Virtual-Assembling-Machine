@@ -13,6 +13,7 @@ class MyDocumentListener implements DocumentListener {
         this.parent = parent;
     }
 
+    @Override
     public void insertUpdate(DocumentEvent e) {
         parent.lineNumbering.setLayout(new GridLayout(parent.textArea.getLineCount(), 3));
         while (parent.numberOfLines < parent.textArea.getLineCount()) {
@@ -24,7 +25,7 @@ class MyDocumentListener implements DocumentListener {
                 } else {
                     parent.lineNumbering.add(new JLabel(Vam.ERROR));
                 }
-            }else {
+            } else {
                 if (parent.Regs[Vam.REG_BZ] == parent.numberOfLines+1) {
                     parent.lineNumbering.add(new JLabel(Vam.ARROW));
                 } else {
@@ -32,7 +33,7 @@ class MyDocumentListener implements DocumentListener {
                 }
             }
 
-            if(parent.numberOfLines<10) {
+            if (parent.numberOfLines<10) {
                 parent.lineNumbering.add(new JLabel(String.valueOf(parent.numberOfLines)+"  "));
             } else {
                 parent.lineNumbering.add(new JLabel(String.valueOf(parent.numberOfLines)));
@@ -44,9 +45,10 @@ class MyDocumentListener implements DocumentListener {
         parent.redo.setEnabled(parent.undoManager.canRedo());
     }
 
+    @Override
     public void removeUpdate(DocumentEvent e) {
         parent.lineNumbering.setLayout(new GridLayout(parent.textArea.getLineCount(), 3));
-        while(parent.textArea.getLineCount() < parent.numberOfLines) {
+        while (parent.textArea.getLineCount() < parent.numberOfLines) {
             parent.lineNumbering.remove(parent.lineNumbering.getComponentCount()-1);
             parent.lineNumbering.remove(parent.lineNumbering.getComponentCount()-1);
             parent.lineNumbering.remove(parent.lineNumbering.getComponentCount()-1);
@@ -57,12 +59,10 @@ class MyDocumentListener implements DocumentListener {
         parent.redo.setEnabled(parent.undoManager.canRedo());
     }
 
+    @Override
     public void changedUpdate(DocumentEvent e) {
         parent.textChanged = true;
         parent.undo.setEnabled(parent.undoManager.canUndo());
         parent.redo.setEnabled(parent.undoManager.canRedo());
     }
-    
-    
-
 }
