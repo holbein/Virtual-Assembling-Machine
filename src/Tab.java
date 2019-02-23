@@ -220,12 +220,7 @@ public class Tab extends JPanel{
      * @see #saveAs()
      * @see #open()
      */
-    private String path = "";
-
-    /**
-     * Frame, that displays the commands.
-     */
-    private JFrame readMe = new JFrame("List of Commands");
+    private String path = "";   
 
     /**
      * Reference to an object of the interface {@link RegisterWidth.Handler} in the class {@link RegisterWidth}.<p>
@@ -243,6 +238,7 @@ public class Tab extends JPanel{
      * @return true if the value is an overflow, otherwise false
      */
     private boolean isOverflow(int value) { return widthHandler.isOverflow(value); }
+    
     /**
      * Casts the value into a number with the current number of bits.<p>
      * 8 bits: cast(200) = -56</p>
@@ -250,6 +246,7 @@ public class Tab extends JPanel{
      * @return cast value
      */
     private int cast(int value) { return widthHandler.cast(value); }
+    
     /**
      * Turns the value into a {@link String} of bits, corresponding to the value and with a space every byte.
      * @param value to be turned into a {@link String} of bits
@@ -261,13 +258,8 @@ public class Tab extends JPanel{
      * Constructs a new Virtual Assembly Machine.
      */
     Tab() {
-        setSize(FRAME_WIDTH, FRAME_HEIGHT);
-        setMinimumSize(new Dimension(420, 385));
-        setLocationRelativeTo(null);
-        setLayout(new GridLayout(1, 2));
-        setTitle("Virtual Assembling Machine v." + VERSION);
-        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-        addWindowListener(new MyWindowListener(this));
+        
+        
 
         holbeinLogos.add(new ImageIcon(Tab.class.getResource("resources/Holbein_Logo_128x128.png")).getImage());
         holbeinLogos.add(new ImageIcon(Tab.class.getResource("resources/Holbein_Logo_64x64.png")).getImage());

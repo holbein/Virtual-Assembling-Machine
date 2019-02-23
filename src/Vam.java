@@ -102,5 +102,26 @@ public class Vam extends JTabbedPane{
      */
     JMenuItem redo;
     
+    /**
+     * Frame, that displays the commands.
+     */
+    private JFrame readMe = new JFrame("List of Commands");
+    
+    public Vam() {
+		setSize(FRAME_WIDTH, FRAME_HEIGHT);
+        setMinimumSize(new Dimension(420, 385));
+        //TODO setLocationRelativeTo(null);
+        setLayout(new GridLayout(1, 2));
+        setName("Virtual Assembling Machine v." + VERSION);
+        addWindowListener(new MyWindowListener(this));
+        
+        
+        
+	}
+    
+    
+    
+    
+    
     
 }
