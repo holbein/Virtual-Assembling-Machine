@@ -1254,7 +1254,7 @@ public class Vam extends JFrame{
      * @return false if 0 &lt; register &lt; {@link NREGS} otherwise true.
      */
     public boolean isBadRegister(int register) {
-        boolean bad = (register < 0 || register >= NREGS);
+        boolean bad = (register < 0 || register > NREGS);
         if (bad) {
             error(register+" in line: "+Regs[REG_BZ]+" is an invalid register!");
         }

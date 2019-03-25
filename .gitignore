@@ -9,3 +9,6 @@ VAM_program.txt
 /nbproject/*
 /build/
 /dist/
+/SimpleThreads/nbproject/private/
+/SimpleThreads/build/
+/zwei_verbraucher_albert/nbproject/private/
