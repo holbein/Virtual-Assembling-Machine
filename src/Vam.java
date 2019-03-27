@@ -1192,7 +1192,7 @@ public class Vam extends JFrame{
 
         if (errorFrame == null || !errorFrame.isDisplayable()) {
             errorFrame = new JFrame("Error");
-            errorFrame.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+            errorFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
             errorFrame.setSize(400, 150);
             errorFrame.setIconImages(holbeinLogos);
 
