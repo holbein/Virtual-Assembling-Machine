@@ -1142,7 +1142,7 @@ public class Vam extends JFrame{
      * @see errorPanel
      */
     @SuppressWarnings("unused")
-    private void error(String text) {
+    public void error(String text) {
         String caller = Thread.currentThread().getStackTrace()[2].getMethodName(); //for debug purposes: shows in which method error(String) was called
         int lineNo = Thread.currentThread().getStackTrace()[2].getLineNumber(); //for debug purposes: show in which line error(String) was called
 

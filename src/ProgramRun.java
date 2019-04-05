@@ -20,6 +20,12 @@ public class ProgramRun extends Thread {
             parent.reDrawRightPanel();
             parent.reDrawLeftIcons();
         }
+
+        //checks if the register-machine has actually been stopped with the "END" command, before hitting the end of the code
+        if(parent.processing && (parent.Regs[Vam.REG_BZ] > parent.textArea.getLineCount())){
+            parent.error("Line "+parent.Regs[Vam.REG_BZ]+" not found. Maybe add \"END\" to the end of your code.");
+        }
+
         parent.start.setText("Start");
         super.run();
     }
